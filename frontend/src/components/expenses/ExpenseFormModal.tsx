@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -17,7 +17,7 @@ const expenseSchema = z.object({
     .min(1, 'Title is required')
     .max(50, 'Max 50 characters allowed')
     .refine((val) => val.trim().length > 0, 'Title cannot be empty or whitespace only'),
-  category_id: z.string().min(1, 'Please select a category'),
+  category_id: z.string().uuid('Please select a valid category'),
   amount: z
     .coerce
     .number({ invalid_type_error: 'Amount must be a valid number' })
@@ -52,23 +52,21 @@ export default function ExpenseFormModal({
   onClose,
   expenseToEdit
 }: ExpenseFormModalProps) {
-  const { categories } = useCategories();
+  const { categories, isLoading: isCategoriesLoading } = useCategories();
   const { createExpense, updateExpense, isCreating, isUpdating } = useExpenses();
-
-  const defaultCategory = categories.length > 0 ? categories[0].id : '';
+  const [formError, setFormError] = useState<string>('');
 
   const {
     register,
     handleSubmit,
     reset,
     setValue,
-    setError,
     formState: { errors }
   } = useForm<ExpenseFormData>({
     resolver: zodResolver(expenseSchema),
     defaultValues: {
       title: '',
-      category_id: defaultCategory,
+      category_id: '',
       amount: '' as any,
       date: new Date().toISOString().split('T')[0],
       notes: '',
@@ -77,6 +75,7 @@ export default function ExpenseFormModal({
   });
 
   useEffect(() => {
+    setFormError('');
     if (isOpen) {
       if (expenseToEdit) {
         reset({
@@ -100,21 +99,22 @@ export default function ExpenseFormModal({
     }
   }, [expenseToEdit, categories, reset, isOpen]);
 
-  // Ensure category_id is set if categories load after modal is open
+  // Sync category_id when categories load asynchronously
   useEffect(() => {
     if (categories.length > 0 && !expenseToEdit) {
-      setValue('category_id', categories[0].id);
+      setValue('category_id', categories[0].id, { shouldValidate: true });
     }
   }, [categories, expenseToEdit, setValue]);
 
   const onSubmit = async (data: ExpenseFormData) => {
+    setFormError('');
     try {
       const payload = {
         title: data.title.trim(),
-        category_id: data.category_id || (categories.length > 0 ? categories[0].id : ''),
+        category_id: data.category_id,
         amount: Number(data.amount),
         date: data.date,
-        notes: data.notes ? data.notes.trim() : undefined,
+        notes: data.notes && data.notes.trim().length > 0 ? data.notes.trim() : undefined,
         payment_mode: data.payment_mode || 'upi'
       };
 
@@ -125,7 +125,7 @@ export default function ExpenseFormModal({
       }
       onClose();
     } catch (err: any) {
-      setError('title', { message: err.message || 'Failed to save expense' });
+      setFormError(err.message || 'Failed to save expense. Please check input details.');
     }
   };
 
@@ -136,6 +136,21 @@ export default function ExpenseFormModal({
       title={expenseToEdit ? 'Edit Expense' : 'Add New Expense'}
     >
       <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        {formError && (
+          <div
+            style={{
+              padding: '0.75rem',
+              backgroundColor: 'rgba(239, 68, 68, 0.15)',
+              border: '1px solid var(--accent-danger)',
+              borderRadius: 'var(--radius-md)',
+              color: 'var(--accent-danger)',
+              fontSize: '0.875rem'
+            }}
+          >
+            ⚠️ {formError}
+          </div>
+        )}
+
         <Input
           label="Title / Merchant *"
           placeholder="e.g. D-Mart Groceries, Uber Ride"
@@ -143,13 +158,14 @@ export default function ExpenseFormModal({
           error={errors.title?.message}
         />
 
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, minWidth: '180px', display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
             <label style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-secondary)' }}>
               Category *
             </label>
             <select
               {...register('category_id')}
+              disabled={isCategoriesLoading || categories.length === 0}
               style={{
                 backgroundColor: 'var(--bg-secondary)',
                 color: 'var(--text-primary)',
@@ -160,11 +176,15 @@ export default function ExpenseFormModal({
                 minHeight: '44px'
               }}
             >
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
+              {categories.length === 0 ? (
+                <option value="">{isCategoriesLoading ? 'Loading categories...' : 'No categories available'}</option>
+              ) : (
+                categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))
+              )}
             </select>
             {errors.category_id && (
               <span style={{ fontSize: '0.75rem', color: 'var(--accent-danger)' }}>
@@ -173,7 +193,7 @@ export default function ExpenseFormModal({
             )}
           </div>
 
-          <div style={{ flex: 1 }}>
+          <div style={{ flex: 1, minWidth: '180px' }}>
             <Input
               label="Amount (₹) *"
               type="number"
@@ -186,8 +206,8 @@ export default function ExpenseFormModal({
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          <div style={{ flex: 1 }}>
+        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+          <div style={{ flex: 1, minWidth: '180px' }}>
             <Input
               label="Transaction Date *"
               type="date"
@@ -196,7 +216,7 @@ export default function ExpenseFormModal({
             />
           </div>
 
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+          <div style={{ flex: 1, minWidth: '180px', display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
             <label style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-secondary)' }}>
               Payment Mode
             </label>
@@ -249,7 +269,7 @@ export default function ExpenseFormModal({
           <Button type="button" variant="secondary" onClick={onClose} disabled={isCreating || isUpdating}>
             Cancel
           </Button>
-          <Button type="submit" isLoading={isCreating || isUpdating}>
+          <Button type="submit" isLoading={isCreating || isUpdating} disabled={categories.length === 0}>
             {expenseToEdit ? 'Save Changes' : 'Log Expense'}
           </Button>
         </div>
