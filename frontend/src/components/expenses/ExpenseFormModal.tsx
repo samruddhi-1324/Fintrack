@@ -14,7 +14,7 @@ import { getTodayLocalDateString } from '../../lib/formatters';
 
 const expenseSchema = z.object({
   title: z
-    .string()
+    .string({ required_error: 'Title is required' })
     .min(1, 'Title is required')
     .max(50, 'Max 50 characters allowed')
     .refine((val) => val.trim().length > 0, 'Title cannot be empty or whitespace only'),
@@ -112,7 +112,7 @@ export default function ExpenseFormModal({
     try {
       const payload = {
         title: data.title.trim(),
-        category_id: data.category_id,
+        category_id: data.category_id || (categories.length > 0 ? categories[0].id : ''),
         amount: Number(data.amount),
         date: data.date,
         notes: data.notes && data.notes.trim().length > 0 ? data.notes.trim() : undefined,
@@ -130,13 +130,22 @@ export default function ExpenseFormModal({
     }
   };
 
+  const onInvalid = (invalidErrors: any) => {
+    console.log('Form Validation Errors:', invalidErrors);
+    const errorKeys = Object.keys(invalidErrors);
+    if (errorKeys.length > 0) {
+      const firstMsg = invalidErrors[errorKeys[0]]?.message;
+      setFormError(`Validation Check: ${firstMsg || 'Please fill in all required fields marked with *'}`);
+    }
+  };
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
       title={expenseToEdit ? 'Edit Expense' : 'Add New Expense'}
     >
-      <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <form onSubmit={handleSubmit(onSubmit, onInvalid)} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         {formError && (
           <div
             style={{
@@ -270,7 +279,7 @@ export default function ExpenseFormModal({
           <Button type="button" variant="secondary" onClick={onClose} disabled={isCreating || isUpdating}>
             Cancel
           </Button>
-          <Button type="submit" isLoading={isCreating || isUpdating} disabled={categories.length === 0}>
+          <Button type="submit" isLoading={isCreating || isUpdating}>
             {expenseToEdit ? 'Save Changes' : 'Log Expense'}
           </Button>
         </div>
