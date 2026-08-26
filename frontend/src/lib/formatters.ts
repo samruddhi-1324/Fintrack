@@ -22,3 +22,14 @@ export function formatDate(dateString: string): string {
     year: 'numeric'
   }).format(date);
 }
+
+/**
+ * Returns today's date in local YYYY-MM-DD format (avoids UTC timezone offset bugs).
+ */
+export function getTodayLocalDateString(): string {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}

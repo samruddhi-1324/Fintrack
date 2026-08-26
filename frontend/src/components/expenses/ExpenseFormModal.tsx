@@ -10,6 +10,7 @@ import Button from '../ui/Button';
 import { Expense } from '../../types/expense';
 import { useExpenses } from '../../hooks/useExpenses';
 import { useCategories } from '../../hooks/useCategories';
+import { getTodayLocalDateString } from '../../lib/formatters';
 
 const expenseSchema = z.object({
   title: z
@@ -17,7 +18,7 @@ const expenseSchema = z.object({
     .min(1, 'Title is required')
     .max(50, 'Max 50 characters allowed')
     .refine((val) => val.trim().length > 0, 'Title cannot be empty or whitespace only'),
-  category_id: z.string().uuid('Please select a valid category'),
+  category_id: z.string().min(1, 'Please select a category'),
   amount: z
     .coerce
     .number({ invalid_type_error: 'Amount must be a valid number' })
@@ -27,7 +28,7 @@ const expenseSchema = z.object({
     .min(1, 'Date is required')
     .refine((val) => {
       if (!val) return false;
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = getTodayLocalDateString();
       return val <= todayStr;
     }, 'Transaction date cannot be in the future'),
   notes: z
@@ -68,7 +69,7 @@ export default function ExpenseFormModal({
       title: '',
       category_id: '',
       amount: '' as any,
-      date: new Date().toISOString().split('T')[0],
+      date: getTodayLocalDateString(),
       notes: '',
       payment_mode: 'upi'
     }
@@ -91,7 +92,7 @@ export default function ExpenseFormModal({
           title: '',
           category_id: categories.length > 0 ? categories[0].id : '',
           amount: '' as any,
-          date: new Date().toISOString().split('T')[0],
+          date: getTodayLocalDateString(),
           notes: '',
           payment_mode: 'upi'
         });
