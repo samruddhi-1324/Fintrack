@@ -1,53 +1,83 @@
 # FinTrack — Project Progress & Memory State Log
 
-**Om Bhai**
+**Last Updated:** August 27, 2026
 
-This document records the exact state of **FinTrack** as of **August 26, 2026**. Use this file when resuming work in a new session.
-
----
-
-## 🎯 Current Project Status: **100% Core Functionality Complete (Deployment Pending)**
-
-| Component | Status | Details |
-|---|---|---|
-| **PostgreSQL Database** | ✅ **Complete** | Database `fintrack_db` running locally with `categories`, `expenses`, and `budgets` tables. |
-| **Backend REST API** | ✅ **Complete** | FastAPI (`backend/app/`), SQLAlchemy 2.0 Async, Pydantic v2 schemas, Alembic migrations, 100% Pytest pass rate. |
-| **Frontend UI** | ✅ **Complete** | Next.js 14 App Router (`frontend/src/app/`), React 18, TanStack Query v5, React Hook Form + Zod, Recharts, Framer Motion. |
-| **Form Validations & Inputs** | ✅ **Complete** | `React.forwardRef` input registration, local YYYY-MM-DD date timezone formatting, UUID category auto-binding. |
-| **CORS Middleware** | ✅ **Complete** | FastAPI configured in `main.py` allowing all localhost origins (`3000`, `3001`, `3002`). |
-| **Automated & Manual Verification** | ✅ **Complete** | Sample database entries populated and verified (`seed_sample_expenses.py`, `test_post_expense.py`). |
-| **Git Repository Sync** | ✅ **Complete** | All commits pushed to [`https://github.com/samruddhi-1324/Fintrack.git`](https://github.com/samruddhi-1324/Fintrack.git) (`main` branch). |
+This document records the exact state of **FinTrack** as of **August 27, 2026**. Use this file when resuming work in a new session.
 
 ---
 
-## 📋 Outstanding Tasks for Next Session:
-- 🚀 **Deployment Phase**:
-  1. Build & Push Docker images (`docker-compose.yml`, `backend/Dockerfile`, `frontend/Dockerfile`).
-  2. Deploy Backend to Render / Railway / AWS / DigitalOcean with Managed PostgreSQL.
-  3. Deploy Frontend to Vercel / Netlify with `NEXT_PUBLIC_API_BASE_URL` environment variable.
-  4. Configure SSL/HTTPS certificates and production environment variables.
+## 🎯 Project Status Overview: **Deployment & Integration 100% Complete**
+
+| Component | Deployment Platform | Status | Live URL / Config |
+|---|---|---|---|
+| **Backend REST API** | **Render** | ✅ **Live & Verified** | `https://fintrack-backend-hmc6.onrender.com/` |
+| **Frontend UI App** | **Vercel** | ✅ **Live & Verified** | `https://fintrack-omega-plum.vercel.app/` |
+| **PostgreSQL Database** | **Render PostgreSQL** | ✅ **Connected & Migrated** | Migrated via Dockerfile (`alembic upgrade head`) |
+| **API Documentation** | **Render (FastAPI)** | ✅ **Live** | `https://fintrack-backend-hmc6.onrender.com/docs` |
+| **Git Repository** | **GitHub** | ✅ **Synced** | [`https://github.com/samruddhi-1324/Fintrack.git`](https://github.com/samruddhi-1324/Fintrack.git) |
 
 ---
 
-## ⚡ How to Resume Tomorrow in a New Session:
+## ✅ Accomplishments in Latest Session:
 
-1. **Start PostgreSQL Database**:
-   Ensure local PostgreSQL superuser `postgres:root@localhost:5432/fintrack_db` is running.
+1. **Dockerized Backend & Automatic Migrations**:
+   - Updated [`backend/Dockerfile`](file:///d:/Fintrack/backend/Dockerfile) CMD to run `alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000`.
+   - Render automatically executes database migrations during container launch, ensuring all PostgreSQL tables (`categories`, `expenses`, `budgets`) are created without manual intervention.
 
-2. **Start Backend Server**:
-   ```bash
-   cd d:\Fintrack\backend
-   .\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000
-   ```
+2. **Frontend Deployment on Vercel**:
+   - Live URL: `https://fintrack-omega-plum.vercel.app/`
+   - Configured Vercel Environment Variable:
+     - `NEXT_PUBLIC_API_BASE_URL` = `https://fintrack-backend-hmc6.onrender.com/api/v1`
 
-3. **Start Frontend Server**:
-   ```bash
-   cd d:\Fintrack\frontend
-   npm run dev
-   ```
+3. **Dynamic CORS Environment Variable Configuration**:
+   - Refactored [`backend/app/main.py`](file:///d:/Fintrack/backend/app/main.py) to drive CORS origins 100% strictly from `settings.CORS_ORIGINS` environment variable.
+   - Render Environment Variable `CORS_ORIGINS` value:
+     `["http://localhost:3000","http://127.0.0.1:3000","https://fintrack-omega-plum.vercel.app"]`
 
-4. **Verify Application**:
-   - Web App: `http://localhost:3000`
-   - Swagger Docs: `http://localhost:8000/docs`
+4. **Live Verification**:
+   - `GET /api/v1/health` -> `200 OK` (`{"status":"healthy","database":"connected"}`)
+   - `GET /api/v1/categories` -> `200 OK` (`[]`)
+   - `GET /api/v1/version` -> `200 OK` (`{"name":"FinTrack API","version":"1.0.0"}`)
 
-**Over n Out**
+---
+
+## 📋 Environment Variables Reference:
+
+### **Vercel (Frontend)**
+```text
+NEXT_PUBLIC_API_BASE_URL=https://fintrack-backend-hmc6.onrender.com/api/v1
+```
+
+### **Render (Backend)**
+```text
+CORS_ORIGINS=["http://localhost:3000","http://127.0.0.1:3000","https://fintrack-omega-plum.vercel.app"]
+DATABASE_URL=postgresql+asyncpg://<user>:<password>@<host>/<dbname>
+ENVIRONMENT=production
+```
+
+---
+
+## ⚡ Summary for Next Session:
+
+When starting a new session, provide the user with the following summary:
+1. **Frontend App**: `https://fintrack-omega-plum.vercel.app/` (Live on Vercel)
+2. **Backend API**: `https://fintrack-backend-hmc6.onrender.com/` (Live on Render)
+3. **Swagger API Docs**: `https://fintrack-backend-hmc6.onrender.com/docs`
+4. **Health Check**: `https://fintrack-backend-hmc6.onrender.com/api/v1/health`
+5. **Database**: PostgreSQL on Render migrated automatically via Alembic on Docker container startup.
+6. **CORS**: `CORS_ORIGINS` configured on Render environment to allow Vercel domain.
+
+---
+
+## 🛠 Local Development Commands (if running locally):
+
+- **Backend**:
+  ```powershell
+  cd d:\Fintrack\backend
+  .\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000
+  ```
+- **Frontend**:
+  ```powershell
+  cd d:\Fintrack\frontend
+  npm run dev
+  ```
