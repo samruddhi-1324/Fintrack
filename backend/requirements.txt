@@ -1,0 +1,22 @@
+# Web Framework
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+
+# Database & ORM (PostgreSQL)
+sqlalchemy
+greenlet
+asyncpg
+psycopg2-binary
+alembic
+
+# Utilities & Formats
+python-dateutil
+reportlab
+openpyxl
+
+# Testing & Quality
+pytest
+pytest-asyncio
+httpx
