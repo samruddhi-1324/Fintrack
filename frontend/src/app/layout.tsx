@@ -1,4 +1,7 @@
 import React from 'react';
+import Providers from './providers';
+import Header from '../components/layout/Header';
+import Navigation from '../components/layout/Navigation';
 import '../styles/globals.css';
 
 export const metadata = {
@@ -14,9 +17,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <div id="app-root">
-          {children}
-        </div>
+        <Providers>
+          <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+            <Header />
+            <Navigation />
+            <div style={{ flex: 1, padding: '1.5rem 1rem', maxWidth: '1280px', margin: '0 auto', width: '100%' }}>
+              {children}
+            </div>
+          </div>
+        </Providers>
       </body>
     </html>
   );
