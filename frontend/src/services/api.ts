@@ -12,7 +12,15 @@ export async function fetchApi<T>(endpoint: string, options: RequestInit = {}): 
 
   if (!response.ok) {
     const errorBody = await response.json().catch(() => ({ detail: 'An unexpected error occurred' }));
-    throw new Error(errorBody.detail || `HTTP Error ${response.status}`);
+    let message = 'An error occurred';
+    if (typeof errorBody.detail === 'string') {
+      message = errorBody.detail;
+    } else if (Array.isArray(errorBody.detail)) {
+      message = errorBody.detail.map((e: any) => e.msg || JSON.stringify(e)).join(', ');
+    } else if (errorBody.detail) {
+      message = JSON.stringify(errorBody.detail);
+    }
+    throw new Error(message || `HTTP Error ${response.status}`);
   }
 
   return response.json();
