@@ -11,21 +11,25 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# Robust CORS configuration for Next.js Frontend (allows localhost & dev ports)
+# CORS configuration for Next.js Frontend (Vercel & Localhost)
+origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://fintrack-omega-plum.vercel.app",
+]
+if hasattr(settings, "CORS_ORIGINS") and settings.CORS_ORIGINS:
+    for o in settings.CORS_ORIGINS:
+        if o not in origins:
+            origins.append(o)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:3001",
-        "http://127.0.0.1:3001",
-        "http://localhost:3002",
-        "*"
-    ],
-    allow_credentials=False,
+    allow_origins=origins if "*" not in origins else ["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # Include API v1 router
 app.include_router(api_router, prefix="/api/v1")
