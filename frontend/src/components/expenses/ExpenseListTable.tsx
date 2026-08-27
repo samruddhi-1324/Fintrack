@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Card from '../ui/Card';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
@@ -39,46 +40,52 @@ export default function ExpenseListTable({ expenses, onEdit, onDelete }: Expense
             </tr>
           </thead>
           <tbody>
-            {expenses.map((expense) => (
-              <tr
-                key={expense.id}
-                style={{
-                  borderBottom: '1px solid var(--border-color)',
-                  transition: 'background-color 0.15s ease'
-                }}
-              >
-                <td style={{ padding: '0.875rem 1rem', whiteSpace: 'nowrap' }}>
-                  {formatDate(expense.date)}
-                </td>
-                <td style={{ padding: '0.875rem 1rem', fontWeight: 600 }}>
-                  <div>{expense.title}</div>
-                  {expense.notes && (
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 400 }}>
-                      {expense.notes}
+            <AnimatePresence initial={false}>
+              {expenses.map((expense, index) => (
+                <motion.tr
+                  key={expense.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, x: -20, height: 0 }}
+                  transition={{ duration: 0.2, delay: index * 0.03 }}
+                  whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.03)' }}
+                  style={{
+                    borderBottom: '1px solid var(--border-color)'
+                  }}
+                >
+                  <td style={{ padding: '0.875rem 1rem', whiteSpace: 'nowrap' }}>
+                    {formatDate(expense.date)}
+                  </td>
+                  <td style={{ padding: '0.875rem 1rem', fontWeight: 600 }}>
+                    <div>{expense.title}</div>
+                    {expense.notes && (
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 400 }}>
+                        {expense.notes}
+                      </div>
+                    )}
+                  </td>
+                  <td style={{ padding: '0.875rem 1rem' }}>
+                    <Badge variant="info">{(expense as any).category_name || 'Category'}</Badge>
+                  </td>
+                  <td style={{ padding: '0.875rem 1rem', textTransform: 'uppercase' }}>
+                    {expense.payment_mode ? <Badge>{expense.payment_mode}</Badge> : '-'}
+                  </td>
+                  <td style={{ padding: '0.875rem 1rem', textAlign: 'right', fontWeight: 700, fontSize: '0.9375rem' }}>
+                    {formatCurrency(expense.amount)}
+                  </td>
+                  <td style={{ padding: '0.875rem 1rem', textAlign: 'right' }}>
+                    <div style={{ display: 'inline-flex', gap: '0.5rem' }}>
+                      <Button size="sm" variant="secondary" onClick={() => onEdit(expense)}>
+                        Edit
+                      </Button>
+                      <Button size="sm" variant="danger" onClick={() => onDelete(expense)}>
+                        Delete
+                      </Button>
                     </div>
-                  )}
-                </td>
-                <td style={{ padding: '0.875rem 1rem' }}>
-                  <Badge variant="info">{(expense as any).category_name || 'Category'}</Badge>
-                </td>
-                <td style={{ padding: '0.875rem 1rem', textTransform: 'uppercase' }}>
-                  {expense.payment_mode ? <Badge>{expense.payment_mode}</Badge> : '-'}
-                </td>
-                <td style={{ padding: '0.875rem 1rem', textAlign: 'right', fontWeight: 700, fontSize: '0.9375rem' }}>
-                  {formatCurrency(expense.amount)}
-                </td>
-                <td style={{ padding: '0.875rem 1rem', textAlign: 'right' }}>
-                  <div style={{ display: 'inline-flex', gap: '0.5rem' }}>
-                    <Button size="sm" variant="secondary" onClick={() => onEdit(expense)}>
-                      Edit
-                    </Button>
-                    <Button size="sm" variant="danger" onClick={() => onDelete(expense)}>
-                      Delete
-                    </Button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                </motion.tr>
+              ))}
+            </AnimatePresence>
           </tbody>
         </table>
       </div>

@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { motion } from 'framer-motion';
 
 export default function Navigation() {
   const pathname = usePathname();
@@ -44,12 +45,32 @@ export default function Navigation() {
                 fontSize: '0.9375rem',
                 fontWeight: 600,
                 color: isActive ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                borderBottom: isActive ? '2px solid var(--accent-primary)' : '2px solid transparent',
-                transition: 'all 0.15s ease-in-out',
-                whiteSpace: 'nowrap'
+                position: 'relative',
+                transition: 'color 0.2s ease',
+                whiteSpace: 'nowrap',
+                textDecoration: 'none'
               }}
             >
-              {item.label}
+              <motion.span whileHover={{ y: -1 }} transition={{ type: 'spring', stiffness: 400 }}>
+                {item.label}
+              </motion.span>
+
+              {isActive && (
+                <motion.div
+                  layoutId="activeNavPill"
+                  transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+                  style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: '2px',
+                    backgroundColor: 'var(--accent-primary)',
+                    borderRadius: '2px',
+                    boxShadow: '0 0 8px rgba(16, 185, 129, 0.6)'
+                  }}
+                />
+              )}
             </Link>
           );
         })}
