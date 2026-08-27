@@ -1,5 +1,5 @@
-const CACHE_NAME = 'fintrack-v3';
-const DYNAMIC_CACHE = 'fintrack-dynamic-v3';
+const CACHE_NAME = 'fintrack-v4';
+const DYNAMIC_CACHE = 'fintrack-dynamic-v4';
 
 const STATIC_ASSETS = [
   '/',
