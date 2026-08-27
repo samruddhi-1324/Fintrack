@@ -10,6 +10,12 @@ class CategorySpendSummary(BaseModel):
     amount: Decimal
     percentage: float
 
+class PaymentModeSpendSummary(BaseModel):
+    payment_mode: str
+    total_amount: Decimal
+    transaction_count: int
+    percentage: float
+
 class SpendingTrendPoint(BaseModel):
     date: str
     amount: Decimal
@@ -21,4 +27,5 @@ class DashboardSummaryResponse(BaseModel):
     daily_limit_status: DailyLimitStatusResponse
     recent_expenses: List[ExpenseResponse]
     category_breakdown: List[CategorySpendSummary]
+    payment_mode_breakdown: List[PaymentModeSpendSummary]
     spending_trend: List[SpendingTrendPoint]

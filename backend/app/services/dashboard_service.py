@@ -11,6 +11,7 @@ from app.models.category import Category
 from app.schemas.dashboard import (
     DashboardSummaryResponse,
     CategorySpendSummary,
+    PaymentModeSpendSummary,
     SpendingTrendPoint
 )
 from app.schemas.expense import ExpenseResponse
@@ -50,7 +51,10 @@ class DashboardService:
         # 5. Category breakdown
         category_breakdown = await self.get_category_breakdown(user_id=user_id)
 
-        # 6. Spending trend (last 30 days)
+        # 6. Payment mode breakdown
+        payment_mode_breakdown = await self.get_payment_mode_breakdown(user_id=user_id)
+
+        # 7. Spending trend (last 30 days)
         spending_trend = await self.get_spending_trend(user_id=user_id)
 
         return DashboardSummaryResponse(
@@ -60,6 +64,7 @@ class DashboardService:
             daily_limit_status=daily_limit_status,
             recent_expenses=recent_expenses,
             category_breakdown=category_breakdown,
+            payment_mode_breakdown=payment_mode_breakdown,
             spending_trend=spending_trend
         )
 
@@ -86,6 +91,33 @@ class DashboardService:
                 category_id=str(cat_id),
                 category_name=cat_name,
                 amount=amt,
+                percentage=round(pct, 2)
+            ))
+        return breakdown
+
+    async def get_payment_mode_breakdown(self, user_id: uuid.UUID = settings.DEFAULT_USER_ID) -> List[PaymentModeSpendSummary]:
+        pm_column = func.coalesce(Expense.payment_mode, "unspecified")
+        stmt = (
+            select(
+                pm_column.label("mode"),
+                func.coalesce(func.sum(Expense.amount), Decimal("0.00")).label("total_amount"),
+                func.count(Expense.id).label("tx_count")
+            )
+            .where(Expense.user_id == user_id)
+            .group_by(pm_column)
+            .order_by(func.sum(Expense.amount).desc())
+        )
+        result = await self.db.execute(stmt)
+        rows = result.all()
+
+        total_all_spending = sum([r[1] for r in rows], Decimal("0.00"))
+        breakdown = []
+        for p_mode, amt, count in rows:
+            pct = float((amt / total_all_spending * 100) if total_all_spending > 0 else 0)
+            breakdown.append(PaymentModeSpendSummary(
+                payment_mode=str(p_mode),
+                total_amount=amt,
+                transaction_count=count,
                 percentage=round(pct, 2)
             ))
         return breakdown

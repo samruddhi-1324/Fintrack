@@ -6,6 +6,7 @@ from app.services.dashboard_service import DashboardService
 from app.schemas.dashboard import (
     DashboardSummaryResponse,
     CategorySpendSummary,
+    PaymentModeSpendSummary,
     SpendingTrendPoint
 )
 
@@ -24,6 +25,13 @@ async def get_dashboard_by_category(
 ):
     service = DashboardService(db)
     return await service.get_category_breakdown()
+
+@router.get("/by-payment-mode", response_model=List[PaymentModeSpendSummary])
+async def get_dashboard_by_payment_mode(
+    db: AsyncSession = Depends(get_db)
+):
+    service = DashboardService(db)
+    return await service.get_payment_mode_breakdown()
 
 @router.get("/trend", response_model=List[SpendingTrendPoint])
 async def get_dashboard_trend(
