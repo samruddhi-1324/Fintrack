@@ -16,9 +16,31 @@ export const metadata: Metadata = {
     statusBarStyle: 'black-translucent',
     title: 'FinTrack'
   },
+  applicationName: 'FinTrack',
   icons: {
-    icon: '/favicon.ico',
-    apple: '/apple-touch-icon.png'
+    icon: [
+      { url: '/favicon.ico?v=3' },
+      { url: '/icons/icon-192.png?v=3', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512.png?v=3', sizes: '512x512', type: 'image/png' }
+    ],
+    shortcut: '/icons/icon-192.png?v=3',
+    apple: [
+      { url: '/apple-touch-icon.png?v=3', sizes: '180x180', type: 'image/png' }
+    ],
+    other: [
+      {
+        rel: 'android-touch-icon',
+        url: '/icons/icon-192.png?v=3'
+      },
+      {
+        rel: 'mask-icon',
+        url: '/icons/icon-512-maskable.png?v=3',
+        color: '#0f172a'
+      }
+    ]
+  },
+  other: {
+    'mobile-web-app-capable': 'yes'
   }
 };
 

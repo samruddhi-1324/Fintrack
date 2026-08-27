@@ -1,5 +1,5 @@
-const CACHE_NAME = 'fintrack-v1';
-const DYNAMIC_CACHE = 'fintrack-dynamic-v1';
+const CACHE_NAME = 'fintrack-v3';
+const DYNAMIC_CACHE = 'fintrack-dynamic-v3';
 
 const STATIC_ASSETS = [
   '/',
@@ -7,11 +7,20 @@ const STATIC_ASSETS = [
   '/categories',
   '/budgets',
   '/offline',
-  '/favicon.ico',
-  '/apple-touch-icon.png',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
-  '/icons/icon-512-maskable.png'
+  '/favicon.ico?v=3',
+  '/apple-touch-icon.png?v=3',
+  '/android-chrome-192x192.png?v=3',
+  '/android-chrome-512x512.png?v=3',
+  '/icons/icon-48.png?v=3',
+  '/icons/icon-72.png?v=3',
+  '/icons/icon-96.png?v=3',
+  '/icons/icon-128.png?v=3',
+  '/icons/icon-144.png?v=3',
+  '/icons/icon-192.png?v=3',
+  '/icons/icon-192-maskable.png?v=3',
+  '/icons/icon-384.png?v=3',
+  '/icons/icon-512.png?v=3',
+  '/icons/icon-512-maskable.png?v=3'
 ];
 
 // Install Event

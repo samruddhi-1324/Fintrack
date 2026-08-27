@@ -34,7 +34,7 @@ export default function Header() {
           {/* Brand Logo / Name */}
           <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', textDecoration: 'none' }}>
             <img
-              src="/icons/icon-192.png"
+              src="/icons/icon-192.png?v=3"
               alt="FinTrack Logo"
               style={{
                 width: '34px',
