@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import Card from '../ui/Card';
+import Card3D from '../ui/Card3D';
 import { SpendingTrendPoint } from '../../services/dashboardApi';
 import { formatCurrency, formatDate } from '../../lib/formatters';
 
@@ -13,11 +13,11 @@ interface SpendingTrendChartProps {
 export default function SpendingTrendChart({ data }: SpendingTrendChartProps) {
   if (!data || data.length === 0) {
     return (
-      <Card style={{ height: '320px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Card3D style={{ height: '320px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
           No spending trend data available yet.
         </p>
-      </Card>
+      </Card3D>
     );
   }
 
@@ -28,8 +28,8 @@ export default function SpendingTrendChart({ data }: SpendingTrendChartProps) {
   }));
 
   return (
-    <Card style={{ height: '360px', display: 'flex', flexDirection: 'column' }}>
-      <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+    <Card3D style={{ height: '360px', display: 'flex', flexDirection: 'column' }} depth={25}>
+      <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.5rem', letterSpacing: '-0.01em' }}>
         Spending Trend Over Time
       </h3>
       <div style={{ flex: 1, width: '100%', minHeight: '260px' }}>
@@ -37,8 +37,8 @@ export default function SpendingTrendChart({ data }: SpendingTrendChartProps) {
           <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <defs>
               <linearGradient id="trendColor" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.4} />
-                <stop offset="95%" stopColor="#38bdf8" stopOpacity={0.0} />
+                <stop offset="5%" stopColor="#10b981" stopOpacity={0.5} />
+                <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
               </linearGradient>
             </defs>
             <XAxis dataKey="formattedDate" stroke="#64748b" fontSize={11} tickLine={false} />
@@ -47,10 +47,10 @@ export default function SpendingTrendChart({ data }: SpendingTrendChartProps) {
               formatter={(val: any) => [formatCurrency(Number(val)), 'Spent']}
               contentStyle={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '8px' }}
             />
-            <Area type="monotone" dataKey="amount" stroke="#38bdf8" strokeWidth={2} fillOpacity={1} fill="url(#trendColor)" />
+            <Area type="monotone" dataKey="amount" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#trendColor)" />
           </AreaChart>
         </ResponsiveContainer>
       </div>
-    </Card>
+    </Card3D>
   );
 }
