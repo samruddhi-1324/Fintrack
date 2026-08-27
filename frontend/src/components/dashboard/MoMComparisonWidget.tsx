@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import Card from '../ui/Card';
+import Card3D from '../ui/Card3D';
 import Badge from '../ui/Badge';
 import { formatCurrency } from '../../lib/formatters';
 
@@ -21,7 +21,7 @@ export default function MoMComparisonWidget({ momData }: MoMComparisonWidgetProp
   const isLower = momData.percentage_change < 0;
 
   return (
-    <Card>
+    <Card3D depth={30}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
         <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
           Month-over-Month Spending Comparison
@@ -45,6 +45,6 @@ export default function MoMComparisonWidget({ momData }: MoMComparisonWidgetProp
           ? `You have saved ${formatCurrency(Math.abs(momData.difference))} compared to last month!`
           : `Your spending is equal to last month.`}
       </p>
-    </Card>
+    </Card3D>
   );
 }

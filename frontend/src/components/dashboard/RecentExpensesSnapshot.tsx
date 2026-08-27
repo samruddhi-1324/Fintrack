@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import Card from '../ui/Card';
+import Card3D from '../ui/Card3D';
 import Badge from '../ui/Badge';
 import { Expense } from '../../types/expense';
 import { formatCurrency, formatDate } from '../../lib/formatters';
@@ -13,7 +13,7 @@ interface RecentExpensesSnapshotProps {
 
 export default function RecentExpensesSnapshot({ expenses }: RecentExpensesSnapshotProps) {
   return (
-    <Card style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+    <Card3D depth={25} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h3 style={{ fontSize: '1rem', fontWeight: 600 }}>Recent Expenses</h3>
         <Link href="/expenses" style={{ fontSize: '0.875rem', color: 'var(--accent-primary)', fontWeight: 600 }}>
@@ -53,6 +53,6 @@ export default function RecentExpensesSnapshot({ expenses }: RecentExpensesSnaps
           ))}
         </div>
       )}
-    </Card>
+    </Card3D>
   );
 }

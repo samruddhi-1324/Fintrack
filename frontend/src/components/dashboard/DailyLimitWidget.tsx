@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import Card from '../ui/Card';
+import Card3D from '../ui/Card3D';
+import Floating3DBadge from '../ui/Floating3DBadge';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import DailyLimitModal from '../budgets/DailyLimitModal';
@@ -31,11 +32,11 @@ export default function DailyLimitWidget({ dailyStatus }: DailyLimitWidgetProps)
 
   return (
     <>
-      <Card style={{ position: 'relative', overflow: 'hidden' }}>
+      <Card3D depth={25} style={{ position: 'relative', overflow: 'hidden' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontSize: '1.25rem' }}>⚡</span>
-            <span style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+            <Floating3DBadge symbol="⚡" size={40} gradient="linear-gradient(135deg, #f59e0b 0%, #d97706 100%)" />
+            <span style={{ fontSize: '1.0625rem', fontWeight: 700, color: 'var(--text-primary)' }}>
               Daily Spending Limit
             </span>
           </div>
@@ -101,7 +102,7 @@ export default function DailyLimitWidget({ dailyStatus }: DailyLimitWidgetProps)
             </Button>
           </div>
         )}
-      </Card>
+      </Card3D>
 
       <DailyLimitModal
         isOpen={isModalOpen}

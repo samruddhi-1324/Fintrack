@@ -2,7 +2,8 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import Card from '../ui/Card';
+import Card3D from '../ui/Card3D';
+import Floating3DBadge from '../ui/Floating3DBadge';
 import { PaymentModeSpendSummary } from '../../services/dashboardApi';
 import { formatCurrency } from '../../lib/formatters';
 
@@ -40,17 +41,17 @@ const modeConfig: Record<string, { label: string; icon: string; color: string; b
 export default function PaymentMethodBreakdownWidget({ data = [] }: PaymentMethodBreakdownWidgetProps) {
   if (!data || data.length === 0) {
     return (
-      <Card style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+      <Card3D depth={30} style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
         <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.5rem' }}>Payment Method Breakdown</h3>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>No payment mode expense data recorded yet.</p>
-      </Card>
+      </Card3D>
     );
   }
 
   const totalSpending = data.reduce((acc, curr) => acc + curr.total_amount, 0);
 
   return (
-    <Card style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Card3D depth={30} style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <div>
           <h3 style={{ fontSize: '1.0625rem', fontWeight: 700 }}>Payment Method Breakdown</h3>
@@ -155,6 +156,6 @@ export default function PaymentMethodBreakdownWidget({ data = [] }: PaymentMetho
           );
         })}
       </div>
-    </Card>
+    </Card3D>
   );
 }

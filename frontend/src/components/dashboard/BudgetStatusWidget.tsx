@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import Card from '../ui/Card';
+import Card3D from '../ui/Card3D';
 import Badge from '../ui/Badge';
 import { BudgetStatus } from '../../types/budget';
 import { formatCurrency } from '../../lib/formatters';
@@ -21,7 +21,7 @@ export default function BudgetStatusWidget({ budgetStatus }: BudgetStatusWidgetP
       : 'var(--accent-success)';
 
   return (
-    <Card>
+    <Card3D depth={30}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
         <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
           Live Monthly Budget Status
@@ -56,6 +56,6 @@ export default function BudgetStatusWidget({ budgetStatus }: BudgetStatusWidgetP
         <span>Spent: {formatCurrency(budgetStatus.total_spent)}</span>
         <span>Goal: {formatCurrency(budgetStatus.total_budget)}</span>
       </div>
-    </Card>
+    </Card3D>
   );
 }
