@@ -172,9 +172,9 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/reports/spending-by-category",
+							"raw": "{{baseUrl}}/reports",
 							"host": ["{{baseUrl}}"],
-							"path": ["reports", "spending-by-category"]
+							"path": ["reports"]
 						}
 					}
 				}

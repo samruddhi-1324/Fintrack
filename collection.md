@@ -91,8 +91,8 @@ Create a new Environment in Postman named **FinTrack Local** or **FinTrack Produ
 ### 5. Dashboard & Analytics (`/dashboard`, `/reports`)
 - **`GET {{baseUrl}}/dashboard/summary`** — Dashboard KPIs (Total Spending, Budget Progress, Monthly Trend).
   - Query Params: `month=8`, `year=2026`
-- **`GET {{baseUrl}}/reports/spending-by-category`** — Breakdown by category for pie/bar charts.
-- **`GET {{baseUrl}}/reports/monthly-trends`** — Historical monthly spending trends.
+- **`GET {{baseUrl}}/reports`** — Category spending breakdown & monthly trend analysis.
+  - Query Params: `period=monthly` (or `daily`, `weekly`)
 
 ### 6. Data Export (`/export`)
 - **`GET {{baseUrl}}/export/csv`** — Export all expense records as a CSV spreadsheet file download.
@@ -278,9 +278,9 @@ Copy the raw JSON block below and paste directly into **Postman** (Import ➔ Ra
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/reports/spending-by-category",
+							"raw": "{{baseUrl}}/reports",
 							"host": ["{{baseUrl}}"],
-							"path": ["reports", "spending-by-category"]
+							"path": ["reports"]
 						}
 					}
 				}

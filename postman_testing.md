@@ -111,11 +111,11 @@ Follow this sequence to test full CRUD and workflow operations:
 
 ---
 
-### 6. Verify Dashboard Summary KPIs
-- Request: **`GET {{baseUrl}}/dashboard/summary`**
+### 6. Get Category Spending & Trend Reports
+- Request: **`GET {{baseUrl}}/reports`** (or with query param `GET {{baseUrl}}/reports?period=monthly`)
 - Click **Send**.
 - **Expected Status**: `200 OK`
-- **Verification**: Check `total_expenses`, budget limit, and spending breakdown reflect your new entry.
+- **Verification**: Returns `category_breakdown` (category IDs, names, amounts, percentages) and `spending_trend`.
 
 ---
 
