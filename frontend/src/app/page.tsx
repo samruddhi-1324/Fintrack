@@ -4,9 +4,7 @@ import React from 'react';
 import SummaryCards from '../components/dashboard/SummaryCards';
 import BudgetStatusWidget from '../components/dashboard/BudgetStatusWidget';
 import DailyLimitWidget from '../components/dashboard/DailyLimitWidget';
-import CategoryPieChart from '../components/dashboard/CategoryPieChart';
 import PaymentMethodBreakdownWidget from '../components/dashboard/PaymentMethodBreakdownWidget';
-import SpendingTrendChart from '../components/dashboard/SpendingTrendChart';
 import RecentExpensesSnapshot from '../components/dashboard/RecentExpensesSnapshot';
 import MoMComparisonWidget from '../components/dashboard/MoMComparisonWidget';
 import { useDashboard } from '../hooks/useDashboard';
@@ -47,14 +45,8 @@ export default function DashboardPage() {
         <MoMComparisonWidget momData={mom} />
       </div>
 
-      {/* Analytics Breakdown Grid (Category Breakdown + Payment Method Breakdown) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1.25rem' }}>
-        <CategoryPieChart data={summary.category_breakdown} />
-        <PaymentMethodBreakdownWidget data={summary.payment_mode_breakdown} />
-      </div>
-
-      {/* Spending Trend Line Chart */}
-      <SpendingTrendChart data={summary.spending_trend} />
+      {/* Payment Method Breakdown Widget */}
+      <PaymentMethodBreakdownWidget data={summary.payment_mode_breakdown} />
 
       {/* Recent Expenses Snapshot */}
       <RecentExpensesSnapshot expenses={summary.recent_expenses} />
