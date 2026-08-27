@@ -1,6 +1,6 @@
 import { fetchApi } from './api';
 import { Expense } from '../types/expense';
-import { BudgetStatus } from '../types/budget';
+import { BudgetStatus, DailyLimitStatus } from '../types/budget';
 
 export interface CategorySpendSummary {
   category_id: string;
@@ -18,6 +18,7 @@ export interface DashboardSummaryResponse {
   total_spent_overall: number;
   total_spent_current_month: number;
   budget_status: BudgetStatus;
+  daily_limit_status: DailyLimitStatus;
   recent_expenses: Expense[];
   category_breakdown: CategorySpendSummary[];
   spending_trend: SpendingTrendPoint[];

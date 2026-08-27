@@ -1,10 +1,10 @@
 import { fetchApi } from './api';
-import { Budget, BudgetStatus } from '../types/budget';
+import { Budget, BudgetStatus, DailyLimitStatus } from '../types/budget';
 
 export interface SetBudgetPayload {
   category_id?: string | null;
   amount: number;
-  period?: 'monthly';
+  period?: 'monthly' | 'daily';
 }
 
 export const budgetApi = {
@@ -13,6 +13,7 @@ export const budgetApi = {
     const query = category_id ? `?category_id=${category_id}` : '';
     return fetchApi<BudgetStatus>(`/budgets/status${query}`);
   },
+  getDailyLimitStatus: () => fetchApi<DailyLimitStatus>('/budgets/daily-status'),
   setBudget: (payload: SetBudgetPayload) =>
     fetchApi<Budget>('/budgets', {
       method: 'POST',
@@ -23,3 +24,4 @@ export const budgetApi = {
       method: 'DELETE'
     })
 };
+

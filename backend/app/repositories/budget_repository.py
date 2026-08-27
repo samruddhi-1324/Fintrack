@@ -17,11 +17,21 @@ class BudgetRepository:
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def get_by_category_id(self, category_id: Optional[uuid.UUID], user_id: uuid.UUID = settings.DEFAULT_USER_ID) -> Optional[Budget]:
+    async def get_by_category_id(
+        self,
+        category_id: Optional[uuid.UUID],
+        period: str = "monthly",
+        user_id: uuid.UUID = settings.DEFAULT_USER_ID
+    ) -> Optional[Budget]:
         if category_id is None:
-            stmt = select(Budget).where(Budget.user_id == user_id, Budget.category_id.is_(None))
+            stmt = select(Budget).where(Budget.user_id == user_id, Budget.category_id.is_(None), Budget.period == period)
         else:
-            stmt = select(Budget).where(Budget.user_id == user_id, Budget.category_id == category_id)
+            stmt = select(Budget).where(Budget.user_id == user_id, Budget.category_id == category_id, Budget.period == period)
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def get_daily_budget(self, user_id: uuid.UUID = settings.DEFAULT_USER_ID) -> Optional[Budget]:
+        stmt = select(Budget).where(Budget.user_id == user_id, Budget.period == "daily", Budget.category_id.is_(None))
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
 
@@ -36,11 +46,12 @@ class BudgetRepository:
         budgets_list = []
         for row in result.all():
             budget, cat_name = row
+            cat_label = cat_name if budget.category_id else ("Daily Spending Limit" if budget.period == "daily" else "Overall Monthly Budget")
             budgets_list.append({
                 "id": budget.id,
                 "user_id": budget.user_id,
                 "category_id": budget.category_id,
-                "category_name": cat_name if budget.category_id else "Overall Monthly Budget",
+                "category_name": cat_label,
                 "amount": budget.amount,
                 "period": budget.period,
                 "created_at": budget.created_at,
@@ -49,9 +60,10 @@ class BudgetRepository:
         return budgets_list
 
     async def upsert(self, obj_in: BudgetCreate, user_id: uuid.UUID = settings.DEFAULT_USER_ID) -> Budget:
-        existing = await self.get_by_category_id(obj_in.category_id, user_id=user_id)
+        existing = await self.get_by_category_id(obj_in.category_id, period=obj_in.period, user_id=user_id)
         if existing:
             existing.amount = obj_in.amount
+            existing.period = obj_in.period
             self.db.add(existing)
             await self.db.commit()
             await self.db.refresh(existing)

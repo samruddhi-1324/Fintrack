@@ -14,11 +14,17 @@ export function useBudgets(category_id?: string) {
     queryFn: () => budgetApi.getBudgetStatus(category_id)
   });
 
+  const dailyStatusQuery = useQuery({
+    queryKey: ['daily-status'],
+    queryFn: budgetApi.getDailyLimitStatus
+  });
+
   const setBudgetMutation = useMutation({
     mutationFn: (payload: SetBudgetPayload) => budgetApi.setBudget(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
       queryClient.invalidateQueries({ queryKey: ['budget-status'] });
+      queryClient.invalidateQueries({ queryKey: ['daily-status'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     }
   });
@@ -28,6 +34,7 @@ export function useBudgets(category_id?: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
       queryClient.invalidateQueries({ queryKey: ['budget-status'] });
+      queryClient.invalidateQueries({ queryKey: ['daily-status'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     }
   });
@@ -35,8 +42,9 @@ export function useBudgets(category_id?: string) {
   return {
     budgets: budgetsQuery.data || [],
     budgetStatus: budgetStatusQuery.data,
-    isLoading: budgetsQuery.isLoading || budgetStatusQuery.isLoading,
-    isError: budgetsQuery.isError || budgetStatusQuery.isError,
+    dailyStatus: dailyStatusQuery.data,
+    isLoading: budgetsQuery.isLoading || budgetStatusQuery.isLoading || dailyStatusQuery.isLoading,
+    isError: budgetsQuery.isError || budgetStatusQuery.isError || dailyStatusQuery.isError,
     setBudget: setBudgetMutation.mutateAsync,
     isSetting: setBudgetMutation.isPending,
     deleteBudget: deleteBudgetMutation.mutateAsync,

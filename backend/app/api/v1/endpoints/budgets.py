@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.services.budget_service import BudgetService
-from app.schemas.budget import BudgetCreate, BudgetResponse, BudgetStatusResponse
+from app.schemas.budget import BudgetCreate, BudgetResponse, BudgetStatusResponse, DailyLimitStatusResponse
 
 router = APIRouter()
 
@@ -30,6 +30,13 @@ async def get_budget_status(
 ):
     service = BudgetService(db)
     return await service.get_budget_status(category_id=category_id)
+
+@router.get("/daily-status", response_model=DailyLimitStatusResponse)
+async def get_daily_limit_status(
+    db: AsyncSession = Depends(get_db)
+):
+    service = BudgetService(db)
+    return await service.get_daily_limit_status()
 
 @router.delete("/{budget_id}", status_code=status.HTTP_200_OK)
 async def delete_budget(

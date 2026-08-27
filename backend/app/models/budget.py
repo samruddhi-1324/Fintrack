@@ -57,5 +57,5 @@ class Budget(Base):
 
     __table_args__ = (
         CheckConstraint("amount > 0", name="check_budget_amount_positive"),
-        CheckConstraint("period = 'monthly'", name="check_budget_period_monthly"),
+        CheckConstraint("period IN ('monthly', 'daily')", name="check_budget_period_valid"),
     )

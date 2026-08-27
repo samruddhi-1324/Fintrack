@@ -3,6 +3,7 @@
 import React from 'react';
 import SummaryCards from '../components/dashboard/SummaryCards';
 import BudgetStatusWidget from '../components/dashboard/BudgetStatusWidget';
+import DailyLimitWidget from '../components/dashboard/DailyLimitWidget';
 import CategoryPieChart from '../components/dashboard/CategoryPieChart';
 import SpendingTrendChart from '../components/dashboard/SpendingTrendChart';
 import RecentExpensesSnapshot from '../components/dashboard/RecentExpensesSnapshot';
@@ -23,13 +24,16 @@ export default function DashboardPage() {
   if (isError || !summary) {
     return (
       <main style={{ padding: '2rem 0', textAlign: 'center', color: 'var(--accent-danger)' }}>
-        Failed to load dashboard data. Please ensure the backend API server is running on <code>http://localhost:8000</code>.
+        Failed to load dashboard data. Please ensure the backend API server is running.
       </main>
     );
   }
 
   return (
     <main style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      {/* Daily Spending Limit Widget */}
+      <DailyLimitWidget dailyStatus={summary.daily_limit_status} />
+
       {/* Overview Metric Cards */}
       <SummaryCards
         totalOverall={summary.total_spent_overall}

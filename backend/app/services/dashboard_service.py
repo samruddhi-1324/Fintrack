@@ -39,8 +39,9 @@ class DashboardService:
         )
         total_month = (await self.db.execute(stmt_month)).scalar() or Decimal("0.00")
 
-        # 3. Budget status
+        # 3. Budget status & Daily limit status
         budget_status = await self.budget_service.get_budget_status(user_id=user_id)
+        daily_limit_status = await self.budget_service.get_daily_limit_status(user_id=user_id)
 
         # 4. Recent expenses snapshot (last 5)
         recent_expenses_raw, _ = await self.expense_repo.list_filtered(user_id=user_id, limit=5, page=1)
@@ -56,6 +57,7 @@ class DashboardService:
             total_spent_overall=total_overall,
             total_spent_current_month=total_month,
             budget_status=budget_status,
+            daily_limit_status=daily_limit_status,
             recent_expenses=recent_expenses,
             category_breakdown=category_breakdown,
             spending_trend=spending_trend

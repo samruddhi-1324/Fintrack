@@ -6,11 +6,12 @@ import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import BudgetFormModal from '../../components/budgets/BudgetFormModal';
 import BudgetCardList from '../../components/budgets/BudgetCardList';
+import DailyLimitWidget from '../../components/dashboard/DailyLimitWidget';
 import { useBudgets } from '../../hooks/useBudgets';
 import { formatCurrency } from '../../lib/formatters';
 
 export default function BudgetsPage() {
-  const { budgets, budgetStatus, isLoading, isError, deleteBudget } = useBudgets();
+  const { budgets, budgetStatus, dailyStatus, isLoading, isError, deleteBudget } = useBudgets();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
@@ -26,6 +27,9 @@ export default function BudgetsPage() {
           + Set Budget Goal
         </Button>
       </div>
+
+      {/* Daily Spending Limit Widget */}
+      <DailyLimitWidget dailyStatus={dailyStatus} />
 
       {/* Live Overall Budget Summary Status Card */}
       {budgetStatus && (

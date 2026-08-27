@@ -2,7 +2,7 @@ from decimal import Decimal
 from typing import List
 from pydantic import BaseModel
 from app.schemas.expense import ExpenseResponse
-from app.schemas.budget import BudgetStatusResponse
+from app.schemas.budget import BudgetStatusResponse, DailyLimitStatusResponse
 
 class CategorySpendSummary(BaseModel):
     category_id: str
@@ -18,6 +18,7 @@ class DashboardSummaryResponse(BaseModel):
     total_spent_overall: Decimal
     total_spent_current_month: Decimal
     budget_status: BudgetStatusResponse
+    daily_limit_status: DailyLimitStatusResponse
     recent_expenses: List[ExpenseResponse]
     category_breakdown: List[CategorySpendSummary]
     spending_trend: List[SpendingTrendPoint]

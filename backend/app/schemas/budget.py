@@ -5,15 +5,16 @@ from typing import Optional, Literal
 from pydantic import BaseModel, Field, ConfigDict
 
 class BudgetBase(BaseModel):
-    category_id: Optional[uuid.UUID] = Field(None, description="Category ID or null for overall budget")
-    amount: Decimal = Field(..., gt=0, decimal_places=2, description="Monthly budget limit in INR (₹)")
-    period: Literal["monthly"] = "monthly"
+    category_id: Optional[uuid.UUID] = Field(None, description="Category ID or null for overall/daily budget")
+    amount: Decimal = Field(..., gt=0, decimal_places=2, description="Budget limit in INR (₹)")
+    period: Literal["monthly", "daily"] = "monthly"
 
 class BudgetCreate(BudgetBase):
     pass
 
 class BudgetUpdate(BaseModel):
     amount: Decimal = Field(..., gt=0, decimal_places=2)
+    period: Optional[Literal["monthly", "daily"]] = None
 
 class BudgetResponse(BudgetBase):
     id: uuid.UUID
@@ -30,3 +31,11 @@ class BudgetStatusResponse(BaseModel):
     remaining: Decimal
     percentage_used: float
     status: Literal["on_track", "near_limit", "over_budget"]
+
+class DailyLimitStatusResponse(BaseModel):
+    daily_limit: Decimal
+    today_spent: Decimal
+    remaining: Decimal
+    percentage_used: float
+    status: Literal["on_track", "near_limit", "over_budget"]
+
