@@ -32,24 +32,19 @@ export default function Header() {
           }}
         >
           {/* Brand Logo / Name */}
-          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
-            <div
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', textDecoration: 'none' }}>
+            <img
+              src="/icons/icon-192.png"
+              alt="FinTrack Logo"
               style={{
-                width: '32px',
-                height: '32px',
+                width: '34px',
+                height: '34px',
                 borderRadius: '8px',
-                background: 'linear-gradient(135deg, #38bdf8 0%, #0284c7 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 'bold',
-                color: '#fff',
-                fontSize: '1.125rem'
+                objectFit: 'contain',
+                boxShadow: '0 2px 8px rgba(16, 185, 129, 0.4)'
               }}
-            >
-              ₹
-            </div>
-            <span style={{ fontSize: '1.25rem', fontWeight: 700, letterSpacing: '-0.025em' }}>
+            />
+            <span style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.025em', color: 'var(--text-primary)' }}>
               FinTrack
             </span>
           </Link>
