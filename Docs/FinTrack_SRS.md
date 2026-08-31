@@ -14,15 +14,17 @@
 This Software Requirements Specification (SRS) defines the functional and non-functional requirements, system architecture, data model, and interface requirements for **FinTrack**, a personal expense tracking web application, Version 1 (V1/MVP). It translates the FinTrack Product Requirements Document (PRD) v2.0 into a technical specification suitable for design, development, and testing.
 
 ### 1.2 Scope
-FinTrack V1 is a responsive web application that allows a single user to:
-- Log, view, edit, and delete expenses
-- Organize expenses into user-defined categories
-- View spending through a dashboard with totals, charts, and reports
+FinTrack V1 is a responsive web application with production-ready authentication that allows users to:
+- Register and log in securely via Email/Password or Google Sign-In (OAuth 2.0 / OpenID Connect)
+- Manage session security via short-lived JWT Access Tokens and HttpOnly Refresh Token rotation/revocation
+- Log, view, edit, and delete personal expenses with strict User Data Isolation
+- Organize expenses into user-defined categories (with default starter categories seeded on registration)
+- View spending through a dynamic dashboard with totals, charts, and reports
 - Set budget goals and track remaining balance live
 - Search, filter, and sort expense records
-- Export expense data (nice-to-have, P2)
+- Export expense data (CSV/PDF/Excel)
 
-V1 is explicitly scoped as a **single-user, no-login, offline-capable (single-device), privately deployed** application. Multi-user support, bank integrations, notifications, and monetization are deferred to later phases (see Section 9).
+V1 is explicitly scoped as a **multi-user ready, authenticated, user-isolated, offline-capable (single-device PWA)** application. Complex features like bank integrations, SMS auto-import, and shared household RBAC budgets are deferred to later phases (see Section 9).
 
 ### 1.3 Definitions, Acronyms, and Abbreviations
 
@@ -36,6 +38,8 @@ V1 is explicitly scoped as a **single-user, no-login, offline-capable (single-de
 | CRUD | Create, Read, Update, Delete |
 | ORM | Object-Relational Mapping |
 | JWT | JSON Web Token |
+| OAuth 2.0 / OIDC | OpenID Connect authentication protocol for Google Sign-In |
+| HttpOnly Cookie | Secure cookie accessible only by the HTTP server, preventing XSS access |
 | RLS | Row Level Security |
 | WCAG | Web Content Accessibility Guidelines |
 | P0/P1/P2 | Priority levels (P0 = must-have, P1 = should-have, P2 = nice-to-have) |
@@ -54,7 +58,7 @@ Section 2 describes the product at a high level. Section 3 details functional re
 ## 2. Overall Description
 
 ### 2.1 Product Perspective
-FinTrack is a new, standalone product — not an extension of an existing system. V1 is a self-contained responsive web application with no external financial integrations. The architecture is designed so that later phases (login, bank sync, multi-user, notifications, monetization) can be added without a fundamental rebuild.
+FinTrack is a new, standalone product — not an extension of an existing system. V1 is a self-contained responsive web application with production-ready authentication and multi-user data isolation. The architecture is designed so that future features (bank sync, shared household budgets, notifications, monetization) can be added without a fundamental rebuild.
 
 **System Context:**
 ```
@@ -62,32 +66,37 @@ FinTrack is a new, standalone product — not an extension of an existing system
 │   React Frontend │  HTTPS  │   FastAPI Backend │   SQL   │  Supabase Postgres │
 │   (Vercel)        │◄───────►│   (Render)         │◄───────►│  (Managed DB)      │
 └─────────────────┘         └──────────────────┘         └───────────────────┘
-        │
-        ▼
-┌─────────────────┐
-│  IndexedDB        │  ← Local offline-write queue (single-device)
-│  (Browser-local)   │
-└─────────────────┘
+        │                            │
+        ▼                            ▼
+┌─────────────────┐        ┌──────────────────┐
+│  IndexedDB       │        │  Google OAuth    │  ← OpenID Connect Verification
+│  (Browser PWA)   │        │  (OIDC Provider) │
+└─────────────────┘        └──────────────────┘
 ```
 
 ### 2.2 Product Functions (Summary)
+- User Authentication (Email/Password Registration, Login, Google Sign-In)
+- Secure Session Management (15-min JWT Access Token + 7-day HttpOnly Refresh Token Rotation & Revocation)
+- Password Reset (token-based reset email workflow) & Password Change
+- **Strict User Data Isolation** (Every expense, category, and budget is owned and accessible only by its authenticated owner)
+- Default Starter Categories seeded dynamically upon user registration
 - Expense CRUD with validation
 - Dynamic, user-managed categories
 - Dashboard with totals, charts (pie/donut, bar/line), and reports
 - Budget goal setting with live remaining-balance tracking
 - Search, filter, and sort across expenses
-- Offline-capable expense entry (single device) with sync-on-reconnect
+- Offline-capable expense entry (single device PWA) with sync-on-reconnect
 - Data export (CSV/PDF/Excel) — P2
 
 ### 2.3 User Characteristics
 
 | User Type | Description |
 |---|---|
-| Primary | Budget-conscious individuals (25–45) tracking personal spending manually, no bookkeeping background assumed |
-| Secondary (Phase 2+) | Couples/households managing shared expenses — out of scope for V1 |
+| Primary | Budget-conscious individuals (25–45) tracking personal spending manually with secure personal accounts |
+| Secondary (Phase 2+) | Couples/households managing shared expenses with RBAC — deferred to Phase 2+ |
 | Tertiary | Freelancers/gig workers with light tax-adjacent tracking needs — not full accounting |
 
-V1 assumes a single system user; no user account management, roles, or permissions exist at this stage.
+V1 supports individual user accounts with complete user data isolation. Role-Based Access Control (RBAC) and admin roles are out of scope for V1.
 
 ### 2.4 Operating Environment
 - **Frontend:** Modern evergreen browsers (Chrome, Firefox, Safari, Edge — latest 2 major versions), desktop and mobile
@@ -96,10 +105,12 @@ V1 assumes a single system user; no user account management, roles, or permissio
 - **Frontend hosting:** Vercel (static build + CDN)
 
 ### 2.5 Design and Implementation Constraints
-- No authentication/login in V1 (single system user, `user_id` defaulted)
+- Production-ready JWT & Google OAuth 2.0 authentication with strict user data isolation
 - Single fixed currency: INR (₹), 2 decimal places
-- No public internet exposure planned for V1 (local/private deployment)
-- No native mobile app in V1 (responsive web only)
+- Secure HTTPS enforcement in production with SameSite HttpOnly cookies
+- Password security: BCrypt hashing, strength validation rules
+- Rate limiting on sensitive authentication endpoints
+- No native mobile app in V1 (responsive web PWA)
 - No hardcoded/demo data permitted at any stage — all data dynamically sourced from the database
 
 ### 2.6 Assumptions and Dependencies
@@ -114,13 +125,26 @@ V1 assumes a single system user; no user account management, roles, or permissio
 
 Each requirement below corresponds to the PRD's FR-ID for traceability.
 
-### 3.1 Navigation
+### 3.1 Authentication & User Data Isolation
 
 | ID | Requirement | Priority |
 |---|---|---|
-| FR-1 | The system shall provide a hamburger menu with two sections: **Dashboard** (view-only summary) and **Expenses** (add/edit/delete/search/filter/sort) | P0 |
+| FR-AUTH-1 | The system shall allow users to register an account using Email, Password, and Full Name with password strength validation | P0 |
+| FR-AUTH-2 | The system shall allow users to authenticate using Email and Password, issuing a 15-minute JWT Access Token and setting a 7-day HttpOnly Refresh Token cookie | P0 |
+| FR-AUTH-3 | The system shall support Google Sign-In via OAuth 2.0 / OpenID Connect ID token verification, finding or creating user accounts automatically | P0 |
+| FR-AUTH-4 | The system shall support Refresh Token rotation, revoking the old refresh token hash and issuing a new Access Token and Refresh Token cookie upon refresh request | P0 |
+| FR-AUTH-5 | The system shall allow single-device Logout (revoking current refresh token hash) and Logout from All Devices/Sessions (revoking all active refresh tokens for the user) | P0 |
+| FR-AUTH-6 | The system shall support Forgot Password (token generation) and Reset Password workflows, along with authenticated Change Password functionality | P0 |
+| FR-AUTH-7 | **Strict User Data Isolation**: The system shall derive the authenticated user identity directly from the validated JWT token on every API call. No user shall be able to access, modify, or delete another user's expenses, categories, or budgets | P0 |
+| FR-AUTH-8 | The system shall seed a default set of starter categories (Food, Transport, Utilities, Entertainment, Housing, Miscellaneous) automatically upon user account creation | P0 |
 
-### 3.2 Expense CRUD
+### 3.2 Navigation
+
+| ID | Requirement | Priority |
+|---|---|---|
+| FR-1 | The system shall provide a navigation header with sections: **Dashboard**, **Expenses**, **Categories**, **Budgets**, **Reports**, **User Profile**, and **Logout** | P0 |
+
+### 3.3 Expense CRUD
 
 | ID | Requirement | Priority |
 |---|---|---|
@@ -129,7 +153,7 @@ Each requirement below corresponds to the PRD's FR-ID for traceability.
 | FR-4 | The system shall allow the user to update any field of an existing expense | P0 |
 | FR-5 | The system shall allow the user to delete an expense, requiring a confirmation step before deletion | P0 |
 
-### 3.3 Category Management
+### 3.4 Category Management
 
 | ID | Requirement | Priority |
 |---|---|---|
@@ -137,9 +161,9 @@ Each requirement below corresponds to the PRD's FR-ID for traceability.
 | FR-7 | The system shall allow the user to rename an existing category | P0 |
 | FR-8 | The system shall prevent deletion of a category with linked expenses unless the user explicitly confirms reassignment of those expenses to another category | P0 |
 | FR-9 | The system shall display the list of categories along with a count of expenses linked to each | P1 |
-| FR-10 | The system shall ship with a set of default starter categories (e.g., Food, Transport, Rent) pre-populated on first use | P2 |
+| FR-10 | The system shall ship with a set of default starter categories pre-populated upon account registration | P0 |
 
-### 3.4 Search, Filter & Sort
+### 3.5 Search, Filter & Sort
 
 | ID | Requirement | Priority |
 |---|---|---|
@@ -151,7 +175,7 @@ Each requirement below corresponds to the PRD's FR-ID for traceability.
 | FR-16 | The system shall allow sorting expenses by amount, date, or category | P1 |
 | — | Search, filter, and sort capabilities shall be usable in combination within a single query | P0 |
 
-### 3.5 Dashboard
+### 3.6 Dashboard
 
 | ID | Requirement | Priority |
 |---|---|---|
@@ -314,11 +338,46 @@ Full endpoint-level detail (query parameters, request/response schemas) is maint
 
 ### 6.1 Entities
 
+**User**
+| Field | Type | Constraints |
+|---|---|---|
+| id | UUID | Primary key |
+| email | string | Required, unique, max 255 chars, indexed |
+| hashed_password | string | Nullable (null for Google OAuth users), max 255 chars |
+| full_name | string | Nullable, max 100 chars |
+| avatar_url | string | Nullable, max 500 chars |
+| is_active | boolean | Default True |
+| is_verified | boolean | Default False |
+| google_id | string | Nullable, unique, indexed |
+| created_at | timestamp | System-generated |
+| updated_at | timestamp | System-generated |
+
+**RefreshToken**
+| Field | Type | Constraints |
+|---|---|---|
+| id | UUID | Primary key |
+| user_id | UUID | Foreign key → User (cascade delete), indexed |
+| token_hash | string | Required, unique, SHA-256 hash of token, indexed |
+| expires_at | timestamp | Required, expiration timestamp |
+| is_revoked | boolean | Default False |
+| created_at | timestamp | System-generated |
+| user_agent | string | Optional, user agent snapshot |
+| ip_address | string | Optional, IP address |
+
+**PasswordResetToken**
+| Field | Type | Constraints |
+|---|---|---|
+| id | UUID | Primary key |
+| user_id | UUID | Foreign key → User (cascade delete) |
+| token_hash | string | Required, unique, SHA-256 hash |
+| expires_at | timestamp | Required, expiration timestamp |
+| is_used | boolean | Default False |
+
 **Expense**
 | Field | Type | Constraints |
 |---|---|---|
 | id | UUID | Primary key |
-| user_id | UUID | Foreign key (defaulted to system user in V1) |
+| user_id | UUID | Foreign key → User (cascade delete), indexed |
 | title | string | Required, max 50 chars |
 | category_id | UUID | Foreign key → Category |
 | amount | numeric(10,2) | Required, positive |
@@ -332,7 +391,7 @@ Full endpoint-level detail (query parameters, request/response schemas) is maint
 | Field | Type | Constraints |
 |---|---|---|
 | id | UUID | Primary key |
-| user_id | UUID | Foreign key (defaulted to system user in V1) |
+| user_id | UUID | Foreign key → User (cascade delete), indexed |
 | name | string | Required, max 30 chars, unique per user (case-insensitive) |
 | is_default | boolean | True for starter categories |
 | created_at | timestamp | System-generated |
@@ -341,7 +400,7 @@ Full endpoint-level detail (query parameters, request/response schemas) is maint
 | Field | Type | Constraints |
 |---|---|---|
 | id | UUID | Primary key |
-| user_id | UUID | Foreign key (defaulted to system user in V1) |
+| user_id | UUID | Foreign key → User (cascade delete), indexed |
 | category_id | UUID (nullable) | Null = overall monthly budget; set = per-category limit |
 | amount | numeric(10,2) | Required, positive |
 | period | enum | monthly (default in V1) |
@@ -349,9 +408,10 @@ Full endpoint-level detail (query parameters, request/response schemas) is maint
 | updated_at | timestamp | System-generated |
 
 ### 6.2 Relationships
+- One `User` has many `Expenses`, `Categories`, `Budgets`, `RefreshTokens`, and `PasswordResetTokens`
 - One `Category` has many `Expenses` (restrict delete unless reassignment confirmed)
 - One `Budget` optionally references one `Category` (null = overall budget)
-- All entities scoped by `user_id`, defaulted to a single system user in V1, ready for multi-user use from Phase 2 onward without schema changes
+- All business resources (`Expense`, `Category`, `Budget`) are strictly isolated by `user_id` mapped to authenticated `User`
 
 ---
 

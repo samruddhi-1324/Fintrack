@@ -65,13 +65,24 @@ Everything else (login, multi-device sync, recurring expenses, notifications, mu
 
 ### 4.1 In-Scope (V1 / MVP)
 
-1. **Expense Entry & CRUD**
+1. **User Authentication & Data Isolation**
+   - Email & Password Registration & Login (BCrypt hashed passwords)
+   - Google Sign-In (OAuth 2.0 / OpenID Connect ID token verification)
+   - Secure JWT Architecture: Short-lived Access Tokens (15 min) + Long-lived Refresh Tokens (7 days)
+   - Refresh Token Rotation & Server-side Revocation stored in SHA-256 hashed database table
+   - HttpOnly, SameSite, Secure Cookie storage for Refresh Tokens
+   - Single-device Logout & Logout from All Devices / Sessions
+   - Forgot Password & Reset Password workflows
+   - Account Password Change for authenticated users
+   - **Strict User Data Isolation**: Every resource (expenses, categories, budgets) bound to authenticated `user_id` derived from validated JWT. No user can access or modify another user's data.
+   - Default Starter Categories seeded dynamically for every newly registered user.
+2. **Expense Entry & CRUD**
    - Full Create / View / Edit / Delete on expenses
    - Fields: Title, Category, Amount (₹, 2 decimal places), Date (defaults to today), Notes (optional), Payment Mode (optional — Cash, Card, UPI)
-2. **Categorization**
-   - Categories the user creates and manages themselves (dynamic, not a fixed list)
-   - A few default starter categories (Food, Transport, Rent, etc.) so the app isn't empty on first use
-3. **Dashboard & Insights**
+3. **Categorization**
+   - Categories the user creates and manages themselves (dynamic, user-isolated)
+   - Default starter categories (Food, Transport, Utilities, Entertainment, Housing, Miscellaneous) seeded upon account registration
+4. **Dashboard & Insights**
    - Total spend (overall and current month)
    - Recent-expenses snapshot
    - Pie/donut chart — spending by category
@@ -79,26 +90,28 @@ Everything else (login, multi-device sync, recurring expenses, notifications, mu
    - Daily/weekly/monthly report views
    - Month-over-month comparison with % change
    - Top categories by spend, ranked
-4. **Budgets**
+5. **Budgets**
    - Overall monthly budget goal and per-category limits
    - Live remaining-balance tracking as expenses are added
    - Status indicator: on track / near limit / over budget
-5. **Search, Filter & Sort** (usable together)
+6. **Search, Filter & Sort** (usable together)
    - Search by title or notes text
    - Filter by date range, category, amount range, payment mode
    - Sort by amount, date, or category
-6. **Navigation**
-   - Simple hamburger menu: Dashboard, Expenses
-7. **Validation & States**
+7. **Navigation**
+   - Navigation header with Dashboard, Expenses, Categories, Budgets, Reports, User Profile Avatar, and Logout controls
+8. **Validation & Security States**
    - Amount must be a positive number
    - Date cannot be in the future
    - Title required, max 50 characters
-   - Empty, loading, and error states for all screens
-8. **Data Export (nice-to-have, time-permitting)**
-   - CSV/PDF/Excel export of filtered or full expense data
+   - Password strength enforcement (min 8 chars, uppercase, lowercase, number, special char)
+   - Auth Rate Limiting to prevent brute-force login and reset attempts
+   - Empty, loading, error, and unauthenticated/unauthorized states for all screens
+9. **Data Export**
+   - CSV/PDF/Excel export of user-isolated filtered or full expense data
 
 ### 4.2 Post-MVP / Phase 2+ Candidates
-- Login and multi-device sync
+- Multi-device sync push notifications
 - Income tracking
 - Recurring/auto-scheduled expenses (rent, subscriptions, EMI)
 - Receipt photo capture with OCR-assisted amount/merchant extraction
@@ -106,7 +119,7 @@ Everything else (login, multi-device sync, recurring expenses, notifications, mu
 - Multiple wallets/accounts (cash, bank, card)
 - Multi-currency support for users who spend/travel across currencies
 - Notifications: budget threshold alerts, weekly/monthly summary digest
-- Shared household budgets with multi-user permissions
+- Shared household budgets with multi-user permissions (RBAC)
 - Goal-based savings tracking
 - Split expenses (roommates/friends)
 - AI-based spend prediction and auto-categorization
@@ -115,7 +128,7 @@ Everything else (login, multi-device sync, recurring expenses, notifications, mu
 - Premium tier: advanced analytics, unlimited bank connections, tax-category tagging
 
 ### 4.3 Out of Scope (V1)
-- Login / multiple user accounts (single-user, no auth in V1)
+- Shared household accounts / Role-based Access Control (RBAC) (single-user ownership per account in V1)
 - Multiple currencies (single fixed currency — ₹/INR — in V1)
 - Bank / UPI / SMS auto-import
 - Income tracking
@@ -125,7 +138,7 @@ Everything else (login, multi-device sync, recurring expenses, notifications, mu
 - Investment portfolio tracking
 - Tax filing or tax-form generation
 - Bill pay / money movement — this is a tracker, not a payments product
-- Dedicated native mobile app (V1 is a responsive web app, usable on mobile browsers)
+- Dedicated native mobile app (V1 is a responsive web app with PWA support)
 
 ---
 

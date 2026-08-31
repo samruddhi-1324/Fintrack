@@ -1,10 +1,14 @@
 import sys
 import os
 import pytest
-from httpx import AsyncClient, ASGITransport
 
+os.environ["ENVIRONMENT"] = "testing"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+from app.core.config import settings
+settings.ENVIRONMENT = "testing"
+
+from httpx import AsyncClient, ASGITransport
 from app.main import app
 
 @pytest.fixture

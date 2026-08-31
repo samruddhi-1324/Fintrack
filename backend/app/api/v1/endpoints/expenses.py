@@ -5,6 +5,8 @@ from typing import List, Optional, Literal
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
+from app.api.dependencies import get_current_user
+from app.models.user import User
 from app.services.expense_service import ExpenseService
 from app.schemas.expense import ExpenseCreate, ExpenseUpdate, ExpenseResponse
 
@@ -13,10 +15,11 @@ router = APIRouter()
 @router.post("", response_model=ExpenseResponse, status_code=status.HTTP_201_CREATED)
 async def create_expense(
     payload: ExpenseCreate,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     service = ExpenseService(db)
-    return await service.create_expense(payload)
+    return await service.create_expense(payload, user_id=current_user.id)
 
 @router.get("")
 async def list_expenses(
@@ -31,10 +34,12 @@ async def list_expenses(
     order: Literal["asc", "desc"] = Query("desc", description="Sort order"),
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(20, ge=1, le=100, description="Items per page"),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     service = ExpenseService(db)
     items, total = await service.list_expenses(
+        user_id=current_user.id,
         search=search,
         category_id=category_id,
         start_date=start_date,
@@ -60,24 +65,27 @@ async def list_expenses(
 @router.get("/{expense_id}", response_model=ExpenseResponse)
 async def get_expense(
     expense_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     service = ExpenseService(db)
-    return await service.get_expense_by_id(expense_id)
+    return await service.get_expense_by_id(expense_id, user_id=current_user.id)
 
 @router.put("/{expense_id}", response_model=ExpenseResponse)
 async def update_expense(
     expense_id: uuid.UUID,
     payload: ExpenseUpdate,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     service = ExpenseService(db)
-    return await service.update_expense(expense_id, payload)
+    return await service.update_expense(expense_id, payload, user_id=current_user.id)
 
 @router.delete("/{expense_id}", status_code=status.HTTP_200_OK)
 async def delete_expense(
     expense_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     service = ExpenseService(db)
-    return await service.delete_expense(expense_id)
+    return await service.delete_expense(expense_id, user_id=current_user.id)

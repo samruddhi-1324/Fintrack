@@ -18,6 +18,7 @@ class Budget(Base):
     )
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
         default=settings.DEFAULT_USER_ID
@@ -50,10 +51,15 @@ class Budget(Base):
     )
 
     # Relationships
+    user: Mapped["User"] = relationship(
+        "User",
+        back_populates="budgets"
+    )
     category: Mapped[Optional["Category"]] = relationship(
         "Category",
         back_populates="budgets"
     )
+
 
     __table_args__ = (
         CheckConstraint("amount > 0", name="check_budget_amount_positive"),

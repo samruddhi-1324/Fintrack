@@ -1,11 +1,14 @@
 # FinTrack — AGENTS.md
+**Project Owner / Lead Developer:** Samruddhi
 
 ## Core Rules
+- **Project Owner / Lead Developer:** Samruddhi
 - Follow the PRD and SRS as the source of truth.
 - Stay within approved V1 scope.
 - Do not invent or silently change requirements.
 - Ask for approval before changing architecture, stack, folder structure, dependencies, database schema, API contracts, or major UI behavior.
-- Start project-related work with **“Om Bhai”** and finish with **“Over n Out”**.
+- Start project-related work with **“Samruddhi”** and finish with **“Over n Out”**.
+
 
 ## Architecture
 - Use **Next.js → FastAPI → PostgreSQL**.

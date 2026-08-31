@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import String, Boolean, DateTime, UniqueConstraint
+from sqlalchemy import String, Boolean, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 from app.core.database import Base
@@ -16,6 +16,7 @@ class Category(Base):
     )
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
         default=settings.DEFAULT_USER_ID
@@ -36,6 +37,10 @@ class Category(Base):
     )
 
     # Relationships
+    user: Mapped["User"] = relationship(
+        "User",
+        back_populates="categories"
+    )
     expenses: Mapped[list["Expense"]] = relationship(
         "Expense",
         back_populates="category",
@@ -46,6 +51,7 @@ class Category(Base):
         back_populates="category",
         cascade="all, delete-orphan"
     )
+
 
     __table_args__ = (
         UniqueConstraint("user_id", "name", name="uq_categories_user_id_name"),

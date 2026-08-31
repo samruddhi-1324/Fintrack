@@ -20,3 +20,13 @@ openpyxl
 pytest
 pytest-asyncio
 httpx
+
+# Auth & Security
+pyjwt
+bcrypt
+slowapi
+google-auth
+requests
+email-validator
+
+
