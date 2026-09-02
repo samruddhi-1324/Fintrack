@@ -85,8 +85,12 @@ export async function fetchApi<T>(endpoint: string, options: RequestInit = {}, r
         } else {
           isRefreshing = false;
           setAccessToken(null);
-          if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
-            window.location.href = '/login';
+          if (typeof window !== 'undefined') {
+            const publicPaths = ['/login', '/register', '/forgot-password', '/reset-password'];
+            const isPublicPath = publicPaths.some((path) => window.location.pathname.startsWith(path));
+            if (!isPublicPath) {
+              window.location.href = '/login';
+            }
           }
         }
       } catch (err) {

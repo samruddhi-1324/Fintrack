@@ -20,6 +20,8 @@ from app.core.security import (
     hash_password, verify_password, validate_password_strength,
     create_access_token, generate_raw_refresh_token, hash_token
 )
+from app.services.email_service import EmailService
+
 
 DEFAULT_STARTER_CATEGORIES = [
     "Food & Dining",
@@ -91,6 +93,12 @@ class AuthService:
 
         # Seed default starter categories
         await self._seed_default_categories(user.id)
+
+        # Dispatch welcome email asynchronously via EmailService
+        await EmailService.send_welcome_email(
+            to_email=user.email,
+            full_name=user.full_name
+        )
 
         # Issue Access Token & Refresh Token
         access_token = create_access_token({"sub": str(user.id)})
@@ -165,11 +173,21 @@ class AuthService:
         id_info = None
         try:
             if settings.GOOGLE_CLIENT_ID:
-                id_info = google_id_token.verify_oauth2_token(
-                    payload.credential,
-                    google_requests.Request(),
-                    settings.GOOGLE_CLIENT_ID
-                )
+                try:
+                    id_info = google_id_token.verify_oauth2_token(
+                        payload.credential,
+                        google_requests.Request(),
+                        settings.GOOGLE_CLIENT_ID,
+                        clock_skew_in_seconds=600
+                    )
+                except Exception:
+                    # Fallback to Google tokeninfo endpoint if local clock drift occurs
+                    async with httpx.AsyncClient() as client:
+                        res = await client.get(f"https://oauth2.googleapis.com/tokeninfo?id_token={payload.credential}")
+                        if res.status_code == 200:
+                            data = res.json()
+                            if data.get("aud") == settings.GOOGLE_CLIENT_ID:
+                                id_info = data
             else:
                 # Fallback token verification via Google API if client id not specified in env
                 async with httpx.AsyncClient() as client:
@@ -178,6 +196,7 @@ class AuthService:
                         id_info = res.json()
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Invalid Google ID token: {str(e)}")
+
 
         if not id_info or "email" not in id_info:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not extract verified identity from Google token")
@@ -314,7 +333,7 @@ class AuthService:
         user = await self.auth_repo.get_user_by_email(payload.email)
         if not user:
             # Return uniform response to prevent email enumeration
-            return {"detail": "If the email is registered, a password reset token has been generated."}
+            return {"detail": "If the email is registered, a password reset email has been sent."}
 
         raw_reset_token = generate_raw_refresh_token()
         token_hash = hash_token(raw_reset_token)
@@ -326,12 +345,18 @@ class AuthService:
             expires_at=expires_at
         )
 
-        # In production email service, send email with raw_reset_token link
-        # For dev/testing API, return token string so user/tests can perform reset
-        return {
-            "detail": "If the email is registered, a password reset token has been generated.",
-            "reset_token": raw_reset_token
-        }
+        # Dispatch email asynchronously via EmailService (SMTP / Resend / Console)
+        sent = await EmailService.send_password_reset_email(
+            to_email=user.email,
+            reset_token=raw_reset_token,
+            full_name=user.full_name
+        )
+
+        res = {"detail": "If the email is registered, a password reset email has been sent."}
+        if (settings.EMAIL_PROVIDER or "").lower() == "console" or settings.ENVIRONMENT == "testing":
+            res["reset_token"] = raw_reset_token
+        return res
+
 
     async def reset_password(self, payload: ResetPasswordRequest) -> dict:
         is_valid, msg = validate_password_strength(payload.new_password)

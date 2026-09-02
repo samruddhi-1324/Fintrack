@@ -37,7 +37,24 @@ class Settings(BaseSettings):
     RATE_LIMIT_REGISTER: str = "3/minute"
     RATE_LIMIT_RESET: str = "3/minute"
     
+    # Email Service Settings (100% Environment Driven)
+    EMAIL_PROVIDER: str = "smtp"
+    EMAIL_FROM: str = "FinTrack <your_email@gmail.com>"
+    FRONTEND_URL: str = "http://localhost:3000"
+    
+    # Local Gmail / Custom SMTP Settings
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_TLS: bool = True
+    SMTP_SSL: bool = False
+    
+    # Resend API Settings (Production)
+    RESEND_API_KEY: str = ""
+    
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
 settings = Settings()
+
 

@@ -11,6 +11,7 @@ function ResetPasswordForm() {
 
   const [token, setToken] = useState(tokenFromUrl);
   const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -28,11 +29,34 @@ function ResetPasswordForm() {
     e.preventDefault();
     setError(null);
     setMessage(null);
+
+    const activeToken = token.trim();
+
+    if (!activeToken) {
+      setError('Missing reset token in URL link. Please open the full reset link sent to your email inbox.');
+      return;
+    }
+
+    if (!newPassword) {
+      setError('Please enter a new password.');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError('Passwords do not match. Please ensure both passwords are identical.');
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setError('Password must be at least 8 characters long.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      await resetPassword({ token, new_password: newPassword });
-      setMessage('Password successfully reset! Redirecting to sign in...');
+      await resetPassword({ token: activeToken, new_password: newPassword });
+      setMessage('Password successfully reset! Redirecting to sign in page...');
       setTimeout(() => {
         router.push('/login');
       }, 2000);
@@ -54,12 +78,48 @@ function ResetPasswordForm() {
       padding: '40px 32px',
       boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
     }}>
-      <h1 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#f8fafc', marginBottom: '8px', textAlign: 'center' }}>
-        Set New Password
-      </h1>
-      <p style={{ fontSize: '0.875rem', color: '#94a3b8', marginBottom: '24px', textAlign: 'center' }}>
-        Enter your reset token and new password below.
-      </p>
+      <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+        <div style={{
+          width: '56px',
+          height: '56px',
+          background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
+          borderRadius: '14px',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '28px',
+          color: '#fff',
+          marginBottom: '16px',
+          boxShadow: '0 8px 20px rgba(99, 102, 241, 0.4)'
+        }}>
+          🔒
+        </div>
+        <h1 style={{ fontSize: '1.6rem', fontWeight: '700', color: '#f8fafc', margin: '0 0 8px 0' }}>
+          Set New Password
+        </h1>
+        <p style={{ fontSize: '0.875rem', color: '#94a3b8', margin: 0 }}>
+          Choose a strong new password for your FinTrack account.
+        </p>
+      </div>
+
+      {!token && (
+        <div style={{
+          padding: '12px 16px',
+          borderRadius: '8px',
+          background: 'rgba(234, 179, 8, 0.15)',
+          border: '1px solid rgba(234, 179, 8, 0.3)',
+          color: '#fde047',
+          fontSize: '0.85rem',
+          marginBottom: '20px',
+          textAlign: 'center',
+          lineHeight: '1.5'
+        }}>
+          ⚠️ No reset token detected in link. Please open the link directly from your email, or{' '}
+          <Link href="/forgot-password" style={{ color: '#818cf8', fontWeight: '600', textDecoration: 'underline' }}>
+            request a new reset link
+          </Link>.
+        </div>
+      )}
 
       {error && (
         <div style={{
@@ -92,14 +152,14 @@ function ResetPasswordForm() {
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: '20px' }}>
           <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '500', color: '#cbd5e1', marginBottom: '8px' }}>
-            Reset Token
+            New Password
           </label>
           <input
-            type="text"
+            type="password"
             required
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            placeholder="Paste token here"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            placeholder="Min 8 chars (upper, lower, digit, special)"
             style={{
               width: '100%',
               padding: '12px 16px',
@@ -116,14 +176,14 @@ function ResetPasswordForm() {
 
         <div style={{ marginBottom: '24px' }}>
           <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '500', color: '#cbd5e1', marginBottom: '8px' }}>
-            New Password
+            Confirm Password
           </label>
           <input
             type="password"
             required
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="Min 8 chars (upper, lower, digit, special)"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="Re-enter your new password"
             style={{
               width: '100%',
               padding: '12px 16px',
@@ -150,10 +210,12 @@ function ResetPasswordForm() {
             color: '#fff',
             fontSize: '1rem',
             fontWeight: '600',
-            cursor: isSubmitting ? 'not-allowed' : 'pointer'
+            cursor: isSubmitting ? 'not-allowed' : 'pointer',
+            boxShadow: '0 4px 14px rgba(99, 102, 241, 0.4)',
+            opacity: isSubmitting ? 0.7 : 1
           }}
         >
-          {isSubmitting ? 'Resetting...' : 'Reset Password'}
+          {isSubmitting ? 'Resetting Password...' : 'Reset Password'}
         </button>
       </form>
 

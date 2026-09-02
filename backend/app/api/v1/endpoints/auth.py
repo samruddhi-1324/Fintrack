@@ -67,8 +67,14 @@ async def refresh_token(
     # If cookie is not present, check Authorization or body if client sent it explicitly
     raw_token = fintrack_refresh_token
     if not raw_token:
-        body = await request.json() if request.headers.get("content-type") == "application/json" else {}
-        raw_token = body.get("refresh_token")
+        body = {}
+        if request.headers.get("content-type") == "application/json":
+            try:
+                body = await request.json()
+            except Exception:
+                body = {}
+        raw_token = body.get("refresh_token") if isinstance(body, dict) else None
+
 
     service = AuthService(db)
     return await service.refresh_token(raw_token, response, user_agent=user_agent, ip_address=ip_address)

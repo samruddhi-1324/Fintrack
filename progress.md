@@ -1,46 +1,62 @@
 # FinTrack — Project Progress & Memory State Log
 
-**Last Updated:** August 31, 2026
+**Last Updated:** September 2, 2026
 
-This document records the exact state of **FinTrack** as of **August 31, 2026**. Use this file when resuming work in a new session.
+This document records the exact state of **FinTrack** as of **September 2, 2026**. Use this file when resuming work in a new session.
 
 ---
 
-## 🎯 Project Status Overview: **Production Authentication & User Data Isolation 100% Complete**
+## 🎯 Project Status Overview: **Pluggable Local SMTP & Resend Email Delivery Service 100% Complete**
 
 | Component | Platform / Status | Details / Config |
 |---|---|---|
-| **Authentication System** | ✅ **Complete & Verified** | Email/Password, Google OAuth 2.0, JWT Access + HttpOnly Refresh Tokens |
+| **Email Service** | ✅ **Complete & Pluggable** | Local SMTP (`aiosmtplib`), Production Resend API (`resend`), and Console fallback |
+| **Password Reset Email** | ✅ **HTML Template Built** | Branded responsive HTML email with CTA link (`/reset-password?token=...`) |
+| **Authentication System** | ✅ **Complete & Verified** | Email/Password, Google OAuth 2.0 (OIDC), JWT Access + HttpOnly Refresh Tokens |
 | **User Data Isolation** | ✅ **Enforced** | Every API endpoint derives `user_id` from JWT; SQL queries strictly filtered |
 | **Database Tables & Migrations** | ✅ **Migrated** | PostgreSQL updated via Alembic `003_add_auth_tables_and_user_fks` |
-| **Backend REST API** | ✅ **10/10 Tests Passed** | Pytest auth, isolation, budget, category, expense, and report tests green |
+| **Backend REST API** | ✅ **10/10 Tests Passed** | Pytest auth, isolation, email dispatch, budget, category, expense tests green |
 | **Frontend Next.js App** | ✅ **13/13 Pages Built** | `npm run build` compiled clean with ProtectedRoute, Login, Register, Reset pages |
-| **Git & Deployment** | ✅ **Environment Driven** | `backend/.env.example` & `frontend/.env.example` fully updated |
 
 ---
 
-## ✅ Accomplishments in Latest Session (August 31, 2026):
+## ✅ Accomplishments in Latest Session (September 2, 2026):
 
-1. **Production-Ready JWT Authentication**:
-   - **Access Token**: Short-lived 15-minute expiration (`pyjwt`).
-   - **Refresh Token**: 7-day expiration stored in `fintrack_refresh_token` HttpOnly, SameSite, Secure cookie.
-   - **Refresh Token Rotation & Revocation**: Server-side table `refresh_tokens` stores SHA-256 token hashes. Re-tokenization on every refresh; reuse terminates all active sessions.
+1. **Pluggable Email Service Integration**:
+   - Built [`EmailService`](file:///d:/Fintrack/backend/app/services/email_service.py) supporting `smtp`, `resend`, and `console` modes via `settings.EMAIL_PROVIDER`.
+   - Added async local SMTP delivery using `aiosmtplib` for local development.
+   - Installed `resend` Python SDK for future production deployment.
 
-2. **Google OAuth 2.0 / OpenID Connect**:
-   - Google ID Token verification on backend (`google.oauth2.id_token` / tokeninfo).
-   - Accounts created or linked automatically with starter category seeding.
-   - Google Sign-In button integrated on Login and Register pages ([`GoogleSignInButton.tsx`](file:///d:/Fintrack/frontend/src/components/auth/GoogleSignInButton.tsx)).
+2. **Responsive HTML Email Template**:
+   - Created [`password_reset.html`](file:///d:/Fintrack/backend/app/templates/email/password_reset.html) styled with FinTrack brand colors, CTA reset button, and expiry notices.
 
-3. **Strict User Data Isolation**:
-   - Every API router ([`expenses.py`](file:///d:/Fintrack/backend/app/api/v1/endpoints/expenses.py), [`categories.py`](file:///d:/Fintrack/backend/app/api/v1/endpoints/categories.py), [`budgets.py`](file:///d:/Fintrack/backend/app/api/v1/endpoints/budgets.py), [`dashboard.py`](file:///d:/Fintrack/backend/app/api/v1/endpoints/dashboard.py), [`reports.py`](file:///d:/Fintrack/backend/app/api/v1/endpoints/reports.py), [`export.py`](file:///d:/Fintrack/backend/app/api/v1/endpoints/export.py)) injects `current_user: User = Depends(get_current_user)`.
-   - Data queries filter strictly by `user_id == current_user.id`. User B receives `404 Not Found` if querying User A's data.
+3. **AuthService Integration**:
+   - Updated [`AuthService.forgot_password`](file:///d:/Fintrack/backend/app/services/auth_service.py) to trigger asynchronous email dispatch when password reset is requested.
+
+4. **Environment Configuration**:
+   - Updated [`backend/.env.example`](file:///d:/Fintrack/backend/.env.example), [`backend/.env`](file:///d:/Fintrack/backend/.env), and [`config.py`](file:///d:/Fintrack/backend/app/core/config.py) with SMTP settings (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_TLS`).
+
+5. **Automated Verification**:
+   - **Pytest**: 10/10 tests passed cleanly.
+
+
+1. **Google OAuth 2.0 Clock Skew Resolution**:
+   - Resolved `Invalid Google ID token: Token used too early` error caused by system clock drift between local machine and Google OAuth servers.
+   - Added `clock_skew_in_seconds=600` tolerance in `google_id_token.verify_oauth2_token`.
+   - Implemented fallback token verification via Google REST API `https://oauth2.googleapis.com/tokeninfo?id_token=...` in [`AuthService.google_login`](file:///d:/Fintrack/backend/app/services/auth_service.py).
+
+2. **Frontend UI Google Sign-In Reliability**:
+   - Updated [`GoogleSignInButton.tsx`](file:///d:/Fintrack/frontend/src/components/auth/GoogleSignInButton.tsx) with a Google-branded fallback button ("Continue with Google" with SVG G-Logo) to ensure 100% reliable rendering on Login and Register pages.
+
+3. **Repository Structure & Change Control**:
+   - Moved project rule-set file to root directory at [`d:\Fintrack\AGENTS.md`](file:///d:/Fintrack/AGENTS.md), set Project Owner to **Samruddhi**.
+   - Created Git commit `feat(auth): implement secure authentication, JWT token rotation, Google Sign-In, and strict user data isolation` and pushed to `origin/main`.
 
 4. **100% Environment-Driven Configuration**:
-   - All settings (`JWT_SECRET_KEY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `COOKIE_SECURE`, `RATE_LIMIT_LOGIN`, etc.) managed strictly via environment variables.
-   - Updated documentation in [`backend/.env.example`](file:///d:/Fintrack/backend/.env.example) and [`frontend/.env.example`](file:///d:/Fintrack/frontend/.env.example).
+   - Fully documented in [`backend/.env.example`](file:///d:/Fintrack/backend/.env.example) and [`frontend/.env.example`](file:///d:/Fintrack/frontend/.env.example).
 
-5. **Automated & Production Build Verification**:
-   - **Pytest**: 10 out of 10 tests passed (`test_auth.py`, `test_expenses_api.py`, `test_categories_api.py`, `test_budgets_api.py`, `test_dashboard_api.py`, `test_health.py`).
+5. **Automated & Build Verification**:
+   - **Pytest**: 10/10 tests passed (`test_auth.py`, `test_expenses_api.py`, `test_categories_api.py`, `test_budgets_api.py`, `test_dashboard_api.py`, `test_health.py`).
    - **Next.js Build**: `npm run build` compiled 13/13 static pages with `<Suspense>` handling on search parameters.
 
 ---
@@ -53,7 +69,7 @@ When resuming tomorrow, provide the user with the following summary:
 3. **Database**: PostgreSQL migrated via Alembic `003_add_auth_tables_and_user_fks`.
 4. **Backend Tests**: 10/10 passed cleanly (`pytest tests/ -v`).
 5. **Frontend Build**: Compiled cleanly (`npm run build`).
-6. **Environment Examples**: Fully documented in `backend/.env.example` and `frontend/.env.example`.
+6. **Git Status**: Up to date with `origin/main`.
 
 ---
 
