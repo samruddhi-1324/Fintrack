@@ -211,6 +211,9 @@ class RuleBasedProvider(BaseAIProvider):
             except Exception:
                 raw_text_sample = ""
         except Exception:
+            raw_text_sample = ""
+
+        if not raw_text_sample:
             try:
                 raw_text_sample = image_bytes.decode("utf-8", errors="ignore")
             except Exception:
