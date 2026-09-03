@@ -207,3 +207,43 @@ class OpenAIProvider(BaseAIProvider):
             logger.warning(f"OpenAI receipt scanning failed: {e}. Falling back to rule-based.", exc_info=False)
             return await self.fallback.scan_receipt(image_bytes, mime_type, categories)
 
+    async def ask_copilot(
+        self,
+        question: str,
+        chat_history: List[Dict[str, str]],
+        financial_context: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        if not self.client or not self.api_key:
+            return await self.fallback.ask_copilot(question, chat_history, financial_context)
+
+        prompt = f"""
+        You are FinTrack AI Copilot personal finance assistant.
+        Answer user question using this authentic financial context (in ₹):
+        {json.dumps(financial_context, indent=2)}
+
+        Question: "{question}"
+
+        Respond in JSON format:
+        {{
+            "answer": "Markdown structured answer with specific ₹ numbers.",
+            "suggested_followups": ["Followup 1?", "Followup 2?"]
+        }}
+        """
+
+        try:
+            response = await self.client.chat.completions.create(
+                model=self.model_name,
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"},
+                temperature=0.3
+            )
+            data = json.loads(response.choices[0].message.content)
+            return {
+                "answer": str(data.get("answer", "Here is your financial analysis.")),
+                "suggested_followups": data.get("suggested_followups", ["How's my health score?"])
+            }
+        except Exception as e:
+            logger.warning(f"OpenAI copilot query failed: {e}. Falling back to rule-based.", exc_info=False)
+            return await self.fallback.ask_copilot(question, chat_history, financial_context)
+
+

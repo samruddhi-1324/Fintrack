@@ -268,4 +268,93 @@ class RuleBasedProvider(BaseAIProvider):
             "raw_text": raw_text_sample if len(raw_text_sample) < 500 else raw_text_sample[:500] + "..."
         }
 
+    async def ask_copilot(
+        self,
+        question: str,
+        chat_history: List[Dict[str, str]],
+        financial_context: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Rule-based Copilot assistant. Answers user queries by evaluating authentic financial context.
+        """
+        q_lower = (question or "").lower()
+
+        curr_month_spent = financial_context.get("total_current_month", 0.0)
+        total_budget = financial_context.get("total_budget", 0.0)
+        daily_burn = financial_context.get("daily_burn_rate", 0.0)
+        safe_daily = financial_context.get("recommended_safe_daily_spend", 0.0)
+        health_score = financial_context.get("health_score", 0)
+        health_grade = financial_context.get("health_grade", "B")
+        category_totals = financial_context.get("category_totals", {})
+        top_expenses = financial_context.get("top_expenses", [])
+
+        # 1. Health Score Queries
+        if any(w in q_lower for w in ["health", "score", "grade", "audit", "status"]):
+            answer = (
+                f"📊 Your **AI Financial Health Score is {health_score}/100** (Grade **{health_grade}**).\n\n"
+                f"* **Current Month Spend**: ₹{curr_month_spent:,.2f}\n"
+                f"* **Monthly Budget Limit**: ₹{total_budget:,.2f}\n"
+                f"* **Daily Burn Velocity**: ₹{daily_burn:,.2f}/day\n\n"
+                f"Keep your daily burn close to your safe daily allowance of **₹{safe_daily:,.2f}/day** to maintain a high score!"
+            )
+            followups = ["Where am I spending the most?", "What is my safe daily limit?", "How can I improve my health score?"]
+
+        # 2. Category / Top Spend Queries
+        elif any(w in q_lower for w in ["where", "most", "category", "highest", "top"]):
+            if category_totals:
+                sorted_cats = sorted(category_totals.items(), key=lambda x: x[1], reverse=True)
+                top_cat, top_amt = sorted_cats[0]
+                top_pct = (top_amt / curr_month_spent * 100) if curr_month_spent > 0 else 0
+                answer = (
+                    f"💸 Your highest spending category this month is **{top_cat}** at **₹{top_amt:,.2f}** ({top_pct:.1f}% of total spend).\n\n"
+                    f"**Category Breakdown:**\n" +
+                    "\n".join([f"* **{c}**: ₹{a:,.2f}" for c, a in sorted_cats[:4]])
+                )
+            else:
+                answer = "You haven't logged any expenses yet this month. Add an expense or scan a receipt to unlock spending breakdown analytics!"
+
+            followups = ["What is my total spend this month?", "How's my monthly budget doing?", "Give me budget tips"]
+
+        # 3. Daily Limit / Burn Pace Queries
+        elif any(w in q_lower for w in ["burn", "daily", "limit", "pace", "safe"]):
+            answer = (
+                f"⚡ Your current spending pace is **₹{daily_burn:,.2f}/day**.\n\n"
+                f"* **Recommended Safe Daily Cap**: ₹{safe_daily:,.2f}/day\n"
+                f"* **Total Spent This Month**: ₹{curr_month_spent:,.2f}\n\n"
+                f"Staying within ₹{safe_daily:,.2f}/day ensures you finish the month with a healthy financial surplus!"
+            )
+            followups = ["How's my health score?", "Where is most of my money going?", "Can I afford to spend ₹1000 today?"]
+
+        # 4. Budget / Total Spend Queries
+        elif any(w in q_lower for w in ["budget", "total", "spent", "spent this month", "balance"]):
+            if total_budget > 0:
+                rem = total_budget - curr_month_spent
+                answer = (
+                    f"💰 You have spent **₹{curr_month_spent:,.2f}** out of your **₹{total_budget:,.2f}** monthly budget limit.\n\n"
+                    f"* **Remaining Budget Buffer**: ₹{rem:,.2f}\n"
+                    f"* **Utilization**: {(curr_month_spent / total_budget * 100):.1f}%\n"
+                )
+            else:
+                answer = f"💰 You have spent **₹{curr_month_spent:,.2f}** this month. You haven't set an overall monthly budget cap yet. Setting a budget goal helps prevent overruns!"
+
+            followups = ["What is my daily burn pace?", "How's my health score?", "Suggest category budgets"]
+
+        # 5. General Savings Advice / Default
+        else:
+            answer = (
+                f"🤖 **FinTrack AI Copilot Overview**:\n\n"
+                f"Here is a real-time summary of your finances:\n"
+                f"* 🎯 **Total Spent This Month**: ₹{curr_month_spent:,.2f}\n"
+                f"* 🏆 **Health Score**: {health_score}/100 (Grade {health_grade})\n"
+                f"* ⚡ **Daily Pace**: ₹{daily_burn:,.2f}/day (Safe Cap: ₹{safe_daily:,.2f}/day)\n\n"
+                f"Ask me anything specific about your spending, categories, budget caps, or savings tips!"
+            )
+            followups = ["How's my health score?", "Where did I spend the most?", "What is my daily burn rate?"]
+
+        return {
+            "answer": answer,
+            "suggested_followups": followups
+        }
+
+
 

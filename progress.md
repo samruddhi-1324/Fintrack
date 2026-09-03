@@ -20,12 +20,14 @@
 | **Natural Language Quick-Add** | ✅ **Built & Tested** | Single-sentence parser for Title, Amount, Payment Mode, and Category (e.g., *"Dinner 450 with upi"*) |
 | **Daily Spending Limit** | ✅ **Built & Tested** | Live tracker for today's spending with remaining cap, progress bar, and warning badges |
 | **Smart Receipt Scanner & OCR** | ✅ **Built & Tested** | AI Vision OCR receipt photo parsing for Merchant, Amount, Date, Payment Mode, Category, & Line Items |
-| **Complete Features Specs** | ✅ **Documented** | Detailed specification of all system capabilities in [`FEATURES.md`](file:///d:/Fintrack/FEATURES.md) |
+| **AI Financial Copilot** | ✅ **Built & Tested** | Conversational 24/7 AI Financial Assistant drawer (`POST /api/v1/ai/copilot`) with context-aware Q&A |
+| **Complete Features Specs** | ✅ **Documented** | Detailed specification in [`FEATURES.md`](file:///d:/Fintrack/FEATURES.md) and [`AI_FEATURES.md`](file:///d:/Fintrack/AI_FEATURES.md) |
 | **Email Service** | ✅ **Complete & Pluggable** | Local SMTP (`aiosmtplib`), Production Resend API (`resend`), and Console fallback |
 | **Authentication System** | ✅ **Complete & Verified** | Email/Password, Google OAuth 2.0 (OIDC), JWT Access + HttpOnly Refresh Tokens |
 | **User Data Isolation** | ✅ **Enforced** | Every API endpoint derives `user_id` from JWT; SQL queries strictly filtered |
-| **Backend REST API Tests** | ✅ **17/17 Tests Passed** | Pytest auth, isolation, email, AI categorization, NLP, insights, forecast, health-score, OCR receipt scanner, budget, category, expense tests all green |
+| **Backend REST API Tests** | ✅ **18/18 Tests Passed** | Pytest auth, isolation, email, AI categorization, NLP, insights, forecast, health-score, OCR, copilot, budget, category, expense tests all green |
 | **Frontend Next.js App** | ✅ **13/13 Pages Built** | `npm run build` compiled clean with 0 errors across all routes |
+
 
 
 ---

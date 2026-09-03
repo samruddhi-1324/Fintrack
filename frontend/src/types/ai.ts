@@ -119,6 +119,23 @@ export interface ReceiptScanResponse {
   raw_text?: string | null;
 }
 
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface AICopilotRequest {
+  question: string;
+  chat_history?: ChatMessage[];
+}
+
+export interface AICopilotResponse {
+  provider: string;
+  answer: string;
+  suggested_followups?: string[];
+}
+
+
 
 
 

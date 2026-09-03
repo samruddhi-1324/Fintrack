@@ -40,16 +40,24 @@ class BaseAIProvider(ABC):
         """
         Performs AI Vision OCR on a receipt image to extract merchant, total amount,
         transaction date, payment mode, matched category, line items, and confidence.
+        """
+        pass
+
+    @abstractmethod
+    async def ask_copilot(
+        self,
+        question: str,
+        chat_history: List[Dict[str, str]],
+        financial_context: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Conversational AI Financial Copilot. Answers financial questions using context-aware
+        user PostgreSQL aggregates (spend, budgets, burn rate, health score, recent top expenses).
         Returns: {
-            "merchant": str,
-            "amount": float,
-            "date": Optional[str],
-            "payment_mode": str,
-            "category": str,
-            "confidence": float,
-            "line_items": List[Dict[str, Any]],
-            "raw_text": Optional[str]
+            "answer": str,
+            "suggested_followups": List[str]
         }
         """
         pass
+
 

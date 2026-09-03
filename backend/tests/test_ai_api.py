@@ -205,5 +205,28 @@ async def test_ai_receipt_scanner(async_client: AsyncClient):
     assert "confidence" in data
     assert data["amount"] == 1450.00 or data["amount"] >= 0.0
 
+@pytest.mark.asyncio
+async def test_ai_copilot_endpoint(async_client: AsyncClient):
+    """Test AI Financial Copilot Q&A endpoint."""
+    email = f"copilot_user_{uuid.uuid4().hex[:6]}@example.com"
+    reg = await async_client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "password": "SecurePassword123!", "full_name": "Copilot User"}
+    )
+    token = reg.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    copilot_resp = await async_client.post(
+        "/api/v1/ai/copilot",
+        json={"question": "Where am I spending the most money?", "chat_history": []},
+        headers=headers
+    )
+    assert copilot_resp.status_code == 200
+    data = copilot_resp.json()
+    assert "answer" in data
+    assert "suggested_followups" in data
+    assert len(data["answer"]) > 5
+
+
 
 

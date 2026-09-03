@@ -249,3 +249,54 @@ class GeminiProvider(BaseAIProvider):
             logger.warning(f"Gemini receipt scanning failed: {e}. Falling back to rule-based scanner.", exc_info=False)
             return await self.fallback.scan_receipt(image_bytes, mime_type, categories)
 
+    async def ask_copilot(
+        self,
+        question: str,
+        chat_history: List[Dict[str, str]],
+        financial_context: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        if not self.model or not self.api_key:
+            return await self.fallback.ask_copilot(question, chat_history, financial_context)
+
+        prompt = f"""
+        You are FinTrack AI Copilot — an expert, encouraging, and highly intelligent personal finance assistant for users in India.
+        Answer the user's question accurately using ONLY the authentic user financial context provided below (in INR ₹).
+        
+        Authentic User Financial Context:
+        {json.dumps(financial_context, indent=2)}
+
+        Recent Conversation History:
+        {json.dumps(chat_history[-6:] if chat_history else [], indent=2)}
+
+        User Question: "{question}"
+
+        Guidelines:
+        1. Keep answers concise, clear, and structured with clean markdown (bullet points, bold text for ₹ values).
+        2. Give actionable financial advice tailored specifically to their numbers.
+        3. Include 2-3 relevant follow-up questions the user might ask next.
+
+        Respond ONLY in valid JSON matching this schema:
+        {{
+            "answer": "Structured markdown answer with specific ₹ numbers and advice.",
+            "suggested_followups": ["Followup question 1?", "Followup question 2?", "Followup question 3?"]
+        }}
+        """
+
+        try:
+            response = self.model.generate_content(
+                prompt,
+                generation_config=genai.GenerationConfig(
+                    response_mime_type="application/json",
+                    temperature=0.3
+                )
+            )
+            data = json.loads(response.text)
+            return {
+                "answer": str(data.get("answer", "Here is your financial update.")),
+                "suggested_followups": data.get("suggested_followups", ["How's my health score?", "Where did I spend most?"])
+            }
+        except Exception as e:
+            logger.warning(f"Gemini copilot query failed: {e}. Falling back to rule-based.", exc_info=False)
+            return await self.fallback.ask_copilot(question, chat_history, financial_context)
+
+

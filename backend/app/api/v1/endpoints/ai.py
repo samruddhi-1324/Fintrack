@@ -13,13 +13,16 @@ from app.schemas.ai import (
     AIInsightsResponse,
     ExpenseForecastResponse,
     FinancialHealthScoreResponse,
-    ReceiptScanResponse
+    ReceiptScanResponse,
+    AICopilotRequest,
+    AICopilotResponse
 )
 from app.services.ai.ai_service import AIService
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
 
 @router.get("/health-score", response_model=FinancialHealthScoreResponse, summary="Get 0-100 AI Financial Health Score & Pillar Breakdown")
 async def get_financial_health_score(
@@ -164,5 +167,33 @@ async def scan_receipt_ocr(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to process receipt image via AI Vision OCR: {str(e)}"
         )
+
+@router.post("/copilot", response_model=AICopilotResponse, summary="Conversational AI Financial Copilot Q&A Assistant")
+async def ask_financial_copilot(
+    payload: AICopilotRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Interactive conversational assistant that evaluates authentic user PostgreSQL metrics
+    (spend, budgets, burn rate, health score, top transactions) to answer financial questions.
+    """
+    try:
+        history_dicts = [{"role": msg.role, "content": msg.content} for msg in payload.chat_history]
+        copilot_response = await AIService.ask_copilot(
+            current_user.id,
+            payload.question,
+            history_dicts,
+            db
+        )
+        return AICopilotResponse(**copilot_response)
+    except Exception as e:
+        logger.error(f"Error querying AI Financial Copilot: {str(e)}", exc_info=True)
+        return AICopilotResponse(
+            provider="rule_based",
+            answer="I encountered an issue analyzing your request. Please try asking again!",
+            suggested_followups=["How's my health score?", "Where am I spending most?"]
+        )
+
 
 

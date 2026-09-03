@@ -700,6 +700,66 @@ class AIService:
         parsed_receipt["provider"] = settings.AI_PROVIDER
         return parsed_receipt
 
+    @classmethod
+    async def ask_copilot(
+        cls,
+        user_id: uuid.UUID,
+        question: str,
+        chat_history: List[Dict[str, str]],
+        db: AsyncSession
+    ) -> Dict[str, Any]:
+        """
+        Gathers 100% authentic user financial context from PostgreSQL:
+        - Spend aggregates & MoM change
+        - Active category budgets & total budget
+        - Daily burn rate & safe daily allowance
+        - Financial Health Score (0-100) & Grade
+        - Top recent transactions
+        Passes context to the active AI Provider.
+        """
+        # Fetch insights & forecast aggregates
+        insights_data = await cls.get_user_spending_insights(user_id, db)
+        forecast_data = await cls.get_expense_forecast(user_id, db)
+        health_data = await cls.get_financial_health_score(user_id, db)
+
+        # Fetch top 5 recent expenses
+        top_exp_query = await db.execute(
+            select(Expense, Category.name.label("category_name"))
+            .join(Category, Expense.category_id == Category.id)
+            .where(Expense.user_id == user_id)
+            .order_by(Expense.amount.desc())
+            .limit(5)
+        )
+        top_expenses = [
+            {
+                "title": exp.title,
+                "amount": float(exp.amount),
+                "category": cat_name,
+                "date": exp.date.isoformat(),
+                "payment_mode": exp.payment_mode
+            }
+            for exp, cat_name in top_exp_query.all()
+        ]
+
+        financial_context = {
+            "total_current_month": insights_data["summary"]["total_current_month"],
+            "total_previous_month": insights_data["summary"]["total_previous_month"],
+            "total_budget": insights_data["summary"]["total_budget"],
+            "category_totals": insights_data.get("category_totals", {}),
+            "daily_burn_rate": forecast_data["daily_burn_rate"],
+            "recommended_safe_daily_spend": forecast_data["recommended_safe_daily_spend"],
+            "health_score": health_data["score"],
+            "health_grade": health_data["grade"],
+            "health_tier": health_data["tier"],
+            "top_expenses": top_expenses
+        }
+
+        provider = cls.get_provider()
+        res = await provider.ask_copilot(question, chat_history, financial_context)
+        res["provider"] = settings.AI_PROVIDER
+        return res
+
+
 
 
 

@@ -115,6 +115,20 @@ class ReceiptScanResponse(BaseModel):
     line_items: List[ReceiptLineItem] = []
     raw_text: Optional[str] = None
 
+class ChatMessage(BaseModel):
+    role: str  # "user" | "assistant"
+    content: str
+
+class AICopilotRequest(BaseModel):
+    question: str = Field(..., min_length=1, max_length=500, description="User question or query for the AI Financial Copilot")
+    chat_history: List[ChatMessage] = Field(default=[], description="Previous conversation turn history")
+
+class AICopilotResponse(BaseModel):
+    provider: str
+    answer: str
+    suggested_followups: List[str] = []
+
+
 
 
 

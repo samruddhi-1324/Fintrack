@@ -5,7 +5,9 @@ import {
   AIInsightsResponse,
   ExpenseForecastResponse,
   FinancialHealthScoreResponse,
-  ReceiptScanResponse
+  ReceiptScanResponse,
+  ChatMessage,
+  AICopilotResponse
 } from '../types/ai';
 
 export const aiApi = {
@@ -43,8 +45,18 @@ export const aiApi = {
       method: 'POST',
       body: formData
     });
-  }
+  },
+
+  askCopilot: (question: string, chatHistory: ChatMessage[] = []) =>
+    fetchApi<AICopilotResponse>('/ai/copilot', {
+      method: 'POST',
+      body: JSON.stringify({
+        question,
+        chat_history: chatHistory
+      })
+    })
 };
+
 
 
 

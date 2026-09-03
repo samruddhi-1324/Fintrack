@@ -5,6 +5,7 @@ import Header from '../components/layout/Header';
 import Navigation from '../components/layout/Navigation';
 import PWARegister from '../components/pwa/PWARegister';
 import PWAInstallPrompt from '../components/pwa/PWAInstallPrompt';
+import { AICopilotDrawer } from '../components/ai/AICopilotDrawer';
 import '../styles/globals.css';
 
 export const metadata: Metadata = {
@@ -69,9 +70,11 @@ export default function RootLayout({
               {children}
             </div>
           </div>
+          <AICopilotDrawer />
         </Providers>
       </body>
     </html>
   );
 }
+
 
