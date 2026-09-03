@@ -227,6 +227,47 @@ async def test_ai_copilot_endpoint(async_client: AsyncClient):
     assert "suggested_followups" in data
     assert len(data["answer"]) > 5
 
+@pytest.mark.asyncio
+async def test_ai_detected_anomalies(async_client: AsyncClient):
+    """Test AI Anomaly & Subscription Price-Hike Detection endpoint."""
+    email = f"anomaly_user_{uuid.uuid4().hex[:6]}@example.com"
+    reg = await async_client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "password": "SecurePassword123!", "full_name": "Anomaly User"}
+    )
+    token = reg.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    cat_resp = await async_client.get("/api/v1/categories", headers=headers)
+    categories = cat_resp.json()
+    util_cat = categories[0]
+
+    from datetime import date, timedelta
+    today = date.today()
+    yesterday = (today - timedelta(days=1)).isoformat()
+    today_str = today.isoformat()
+
+    # Add subscription payments (Netflix hike from 499 to 649)
+    await async_client.post(
+        "/api/v1/expenses",
+        json={"title": "Netflix Subscription", "amount": 499.0, "category_id": util_cat["id"], "date": yesterday, "payment_mode": "card"},
+        headers=headers
+    )
+    await async_client.post(
+        "/api/v1/expenses",
+        json={"title": "Netflix Subscription", "amount": 649.0, "category_id": util_cat["id"], "date": today_str, "payment_mode": "card"},
+        headers=headers
+    )
+
+    # Fetch anomalies
+    anomaly_resp = await async_client.get("/api/v1/ai/anomalies", headers=headers)
+    assert anomaly_resp.status_code == 200
+    data = anomaly_resp.json()
+    assert "total_anomalies_found" in data
+    assert "anomalies" in data
+    assert data["subscription_hikes_count"] >= 1
+    assert any(a["type"] == "subscription_hike" for a in data["anomalies"])
+
 
 
 

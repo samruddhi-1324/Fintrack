@@ -161,9 +161,24 @@ Integrated into the Dashboard ([`AIInsightsWidget.tsx`](file:///d:/Fintrack/fron
 
 ---
 
+## 🚨 11. AI Anomaly & Subscription Price-Hike Detector
+
+* **API Endpoint**: `GET /api/v1/ai/anomalies`
+* **Frontend Component**: [`AIAnomaliesWidget.tsx`](file:///d:/Fintrack/frontend/src/components/ai/AIAnomaliesWidget.tsx)
+* **Dashboard Location**: Mounted on the main Dashboard overview page.
+
+### Capabilities:
+* **Subscription Price-Hike Detection**: Monitors recurring merchant transactions (e.g. *Netflix*, *Spotify*, *Jio*, *Electricity*, *Gym*, *Rent*). Automatically flags price increases $\ge 5\%$ with previous vs current amount comparison and percentage increase badges (`📈 Price Hike +30%`).
+* **Duplicate Charge Detection**: Audits transaction timestamps and amounts to detect identical charges recorded within 24–48 hours (`👯 Duplicate Charge`).
+* **Category Outlier Spike Detection**: Identifies recent individual transactions exceeding $2.5\times$ the user's historical category median (`⚡ Outlier Spike`).
+* **Interactive Filter Tabs**: Filter anomalies by `All`, `Price Hikes 📈`, `Duplicates 👯`, or `Category Spikes ⚡`.
+* **Clean State Security**: Shows a verified green shield badge (`🛡️ Financial Records Clean & Secure`) when 0 anomalies are detected.
+
+---
+
 ## 🧪 Verification & Automated Testing
 
 All AI features are backed by automated tests:
-* **Backend Pytest Suite**: `pytest tests/test_ai_api.py -v` (8/8 AI tests passed, 18/18 total backend tests passed).
+* **Backend Pytest Suite**: `pytest tests/test_ai_api.py -v` (9/9 AI tests passed, 19/19 total backend tests passed).
 * **Frontend Build**: `npm run build` (13/13 static routes compiled with 0 errors).
 

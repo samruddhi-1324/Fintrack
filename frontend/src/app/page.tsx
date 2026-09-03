@@ -10,6 +10,7 @@ import MoMComparisonWidget from '../components/dashboard/MoMComparisonWidget';
 import { AIInsightsWidget } from '../components/ai/AIInsightsWidget';
 import { AIForecastWidget } from '../components/ai/AIForecastWidget';
 import { FinancialHealthScoreWidget } from '../components/ai/FinancialHealthScoreWidget';
+import { AIAnomaliesWidget } from '../components/ai/AIAnomaliesWidget';
 import { ProtectedRoute } from '../components/auth/ProtectedRoute';
 import { useDashboard } from '../hooks/useDashboard';
 
@@ -37,6 +38,9 @@ export default function DashboardPage() {
 
             {/* AI Predictive Expense Forecast Widget */}
             <AIForecastWidget />
+
+            {/* AI Anomaly & Subscription Price-Hike Detector Widget */}
+            <AIAnomaliesWidget />
 
             {/* Daily Spending Limit Widget */}
             <DailyLimitWidget dailyStatus={summary.daily_limit_status} />

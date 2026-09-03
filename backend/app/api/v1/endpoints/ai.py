@@ -15,13 +15,34 @@ from app.schemas.ai import (
     FinancialHealthScoreResponse,
     ReceiptScanResponse,
     AICopilotRequest,
-    AICopilotResponse
+    AICopilotResponse,
+    AnomaliesResponse
 )
 from app.services.ai.ai_service import AIService
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+@router.get("/anomalies", response_model=AnomaliesResponse, summary="Get AI detected spending anomalies & subscription price hikes")
+async def get_detected_anomalies(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Audits user PostgreSQL transaction history to detect subscription price hikes,
+    potential duplicate charges, and extreme category spending spikes.
+    """
+    try:
+        anomaly_data = await AIService.get_detected_anomalies(current_user.id, db)
+        return AnomaliesResponse(**anomaly_data)
+    except Exception as e:
+        logger.error(f"Error detecting AI anomalies: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to analyze financial anomalies."
+        )
 
 
 @router.get("/health-score", response_model=FinancialHealthScoreResponse, summary="Get 0-100 AI Financial Health Score & Pillar Breakdown")

@@ -128,6 +128,30 @@ class AICopilotResponse(BaseModel):
     answer: str
     suggested_followups: List[str] = []
 
+class AnomalyItem(BaseModel):
+    id: str
+    type: str  # "subscription_hike" | "duplicate_charge" | "category_spike"
+    severity: str  # "warning" | "danger" | "info"
+    badge_emoji: str  # "📈" | "👯" | "🚨"
+    title: str
+    message: str
+    merchant: str
+    category_name: str
+    current_amount: float
+    previous_amount: Optional[float] = None
+    change_pct: Optional[float] = None
+    expense_id: Optional[str] = None
+    date: str
+
+class AnomaliesResponse(BaseModel):
+    provider: str
+    total_anomalies_found: int
+    duplicate_count: int
+    subscription_hikes_count: int
+    category_spikes_count: int
+    anomalies: List[AnomalyItem]
+    summary_headline: str
+
 
 
 

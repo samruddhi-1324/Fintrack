@@ -772,6 +772,175 @@ class AIService:
         res["provider"] = settings.AI_PROVIDER
         return res
 
+    @classmethod
+    async def get_detected_anomalies(cls, user_id: uuid.UUID, db: AsyncSession) -> Dict[str, Any]:
+        """
+        AI Anomaly & Subscription Price-Hike Detection Engine:
+        1. Subscription Price-Hike Detection:
+           Groups expenses by merchant/clean title. Compares recent charge against past charges.
+           Flag increases >= 5% on recurring titles.
+        2. Duplicate Charge Detection:
+           Identifies expenses with identical merchant & amount recorded within 24-48 hours.
+        3. Category Outlier Spike Detection:
+           Flags recent individual expenses exceeding 2.5x historical median spend for that category.
+        """
+        expenses_query = await db.execute(
+            select(Expense, Category.name.label("category_name"))
+            .join(Category, Expense.category_id == Category.id)
+            .where(Expense.user_id == user_id)
+            .order_by(Expense.date.desc(), Expense.created_at.desc())
+        )
+        rows = expenses_query.all()
+
+        anomalies = []
+        dup_count = 0
+        hike_count = 0
+        spike_count = 0
+
+        if not rows:
+            return {
+                "provider": settings.AI_PROVIDER,
+                "total_anomalies_found": 0,
+                "duplicate_count": 0,
+                "subscription_hikes_count": 0,
+                "category_spikes_count": 0,
+                "anomalies": [],
+                "summary_headline": "No suspicious charges or price hikes detected. Financial records clear! 🛡️"
+            }
+
+        import re
+
+        def clean_merchant_key(title_str: str) -> str:
+            return re.sub(r'[^a-zA-Z0-9]', '', (title_str or "").lower())
+
+        merchant_map = {}
+        category_amounts = {}
+
+        for exp, cat_name in rows:
+            m_key = clean_merchant_key(exp.title)
+            if m_key not in merchant_map:
+                merchant_map[m_key] = []
+            merchant_map[m_key].append({
+                "id": str(exp.id),
+                "title": exp.title,
+                "amount": float(exp.amount),
+                "date": exp.date,
+                "category_name": cat_name
+            })
+
+            if cat_name not in category_amounts:
+                category_amounts[cat_name] = []
+            category_amounts[cat_name].append(float(exp.amount))
+
+        # 1. Subscription Price-Hike Detection
+        sub_keywords = [
+            "netflix", "spotify", "prime", "hotstar", "jio", "airtel", "vi", "wifi",
+            "broadband", "rent", "gym", "apple", "google", "icloud", "chatgpt",
+            "openai", "newspaper", "electricity", "water", "dth", "tata play", "maintenance"
+        ]
+
+        for m_key, items in merchant_map.items():
+            if len(items) >= 2:
+                latest = items[0]
+                previous = items[1]
+
+                is_sub_keyword = any(kw in m_key for kw in sub_keywords) or len(items) >= 3
+                if is_sub_keyword and latest["amount"] > previous["amount"]:
+                    diff = latest["amount"] - previous["amount"]
+                    pct = round((diff / previous["amount"]) * 100, 1)
+
+                    if pct >= 5.0:
+                        hike_count += 1
+                        anomalies.append({
+                            "id": f"hike_{latest['id']}",
+                            "type": "subscription_hike",
+                            "severity": "warning" if pct < 30 else "danger",
+                            "badge_emoji": "📈",
+                            "title": f"Subscription Price Spike: {latest['title']}",
+                            "message": f"{latest['title']} increased by {pct}% (from ₹{previous['amount']:,.2f} to ₹{latest['amount']:,.2f}).",
+                            "merchant": latest["title"],
+                            "category_name": latest["category_name"],
+                            "current_amount": latest["amount"],
+                            "previous_amount": previous["amount"],
+                            "change_pct": pct,
+                            "expense_id": latest["id"],
+                            "date": latest["date"].isoformat()
+                        })
+
+        # 2. Duplicate Charge Detection
+        seen_duplicates = set()
+        for i in range(len(rows)):
+            exp1, cat1 = rows[i]
+            for j in range(i + 1, min(i + 15, len(rows))):
+                exp2, cat2 = rows[j]
+
+                key1 = clean_merchant_key(exp1.title)
+                key2 = clean_merchant_key(exp2.title)
+
+                if key1 and key1 == key2 and float(exp1.amount) == float(exp2.amount):
+                    day_diff = abs((exp1.date - exp2.date).days)
+                    if day_diff <= 2 and str(exp1.id) not in seen_duplicates:
+                        seen_duplicates.add(str(exp1.id))
+                        dup_count += 1
+                        anomalies.append({
+                            "id": f"dup_{exp1.id}",
+                            "type": "duplicate_charge",
+                            "severity": "danger",
+                            "badge_emoji": "👯",
+                            "title": f"Possible Duplicate Charge: {exp1.title}",
+                            "message": f"Two identical charges of ₹{float(exp1.amount):,.2f} for '{exp1.title}' logged within {day_diff} day(s). Verify statement!",
+                            "merchant": exp1.title,
+                            "category_name": cat1,
+                            "current_amount": float(exp1.amount),
+                            "previous_amount": float(exp2.amount),
+                            "change_pct": 0.0,
+                            "expense_id": str(exp1.id),
+                            "date": exp1.date.isoformat()
+                        })
+
+        # 3. Category Outlier Spike Detection
+        for exp, cat_name in rows[:10]:
+            cat_list = category_amounts.get(cat_name, [])
+            if len(cat_list) >= 3:
+                sorted_vals = sorted(cat_list)
+                mid = len(sorted_vals) // 2
+                median_val = sorted_vals[mid]
+                amt = float(exp.amount)
+
+                if amt > (median_val * 2.5) and amt > 2000 and f"dup_{exp.id}" not in seen_duplicates and f"hike_{exp.id}" not in [a["id"] for a in anomalies]:
+                    spike_count += 1
+                    anomalies.append({
+                        "id": f"spike_{exp.id}",
+                        "type": "category_spike",
+                        "severity": "info",
+                        "badge_emoji": "⚡",
+                        "title": f"Unusual Spend Outlier in {cat_name}",
+                        "message": f"₹{amt:,.2f} spent on '{exp.title}' is {round(amt/median_val, 1)}x higher than your usual category average of ₹{median_val:,.2f}.",
+                        "merchant": exp.title,
+                        "category_name": cat_name,
+                        "current_amount": amt,
+                        "previous_amount": median_val,
+                        "change_pct": round(((amt - median_val) / median_val) * 100, 1),
+                        "expense_id": str(exp.id),
+                        "date": exp.date.isoformat()
+                    })
+
+        total_anomalies = len(anomalies)
+        if total_anomalies > 0:
+            summary = f"Detected {total_anomalies} anomaly alert(s) requiring your review ({hike_count} price hikes, {dup_count} duplicates, {spike_count} spikes)."
+        else:
+            summary = "No suspicious charges or price hikes detected. All transactions look healthy! 🛡️"
+
+        return {
+            "provider": settings.AI_PROVIDER,
+            "total_anomalies_found": total_anomalies,
+            "duplicate_count": dup_count,
+            "subscription_hikes_count": hike_count,
+            "category_spikes_count": spike_count,
+            "anomalies": anomalies,
+            "summary_headline": summary
+        }
+
 
 
 

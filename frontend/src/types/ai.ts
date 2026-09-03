@@ -135,6 +135,32 @@ export interface AICopilotResponse {
   suggested_followups?: string[];
 }
 
+export interface AnomalyItem {
+  id: string;
+  type: 'subscription_hike' | 'duplicate_charge' | 'category_spike';
+  severity: 'danger' | 'warning' | 'info';
+  badge_emoji: string;
+  title: string;
+  message: string;
+  merchant: string;
+  category_name: string;
+  current_amount: number;
+  previous_amount?: number | null;
+  change_pct?: number | null;
+  expense_id?: string | null;
+  date: string;
+}
+
+export interface AnomaliesResponse {
+  provider: string;
+  total_anomalies_found: number;
+  duplicate_count: number;
+  subscription_hikes_count: number;
+  category_spikes_count: number;
+  anomalies: AnomalyItem[];
+  summary_headline: string;
+}
+
 
 
 

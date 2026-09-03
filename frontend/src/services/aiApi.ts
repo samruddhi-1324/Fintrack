@@ -7,10 +7,16 @@ import {
   FinancialHealthScoreResponse,
   ReceiptScanResponse,
   ChatMessage,
-  AICopilotResponse
+  AICopilotResponse,
+  AnomaliesResponse
 } from '../types/ai';
 
 export const aiApi = {
+  getAnomalies: () =>
+    fetchApi<AnomaliesResponse>('/ai/anomalies', {
+      method: 'GET'
+    }),
+
   categorize: (title: string) =>
     fetchApi<CategorizeResponse>('/ai/categorize', {
       method: 'POST',
