@@ -161,6 +161,46 @@ export interface AnomaliesResponse {
   summary_headline: string;
 }
 
+export interface GroupBillParticipantShare {
+  name: string;
+  share_amount: number;
+  share_percentage: number;
+  is_payer: boolean;
+}
+
+export interface DebtSettlementItem {
+  from_name: string;
+  to_name: string;
+  amount: number;
+  message: string;
+}
+
+export interface GroupBillSplitRequest {
+  title: string;
+  total_amount: number;
+  payer_name?: string;
+  participants: string[];
+  split_mode?: 'equal' | 'percentage' | 'custom';
+  custom_shares?: Record<string, number>;
+  category_name?: string | null;
+}
+
+export interface GroupBillSplitResponse {
+  provider: string;
+  title: string;
+  total_amount: number;
+  payer_name: string;
+  split_mode: string;
+  per_person_equal_share: number;
+  participants: GroupBillParticipantShare[];
+  settlement_transfers: DebtSettlementItem[];
+  whatsapp_summary: string;
+  user_personal_share: number;
+  category_id?: string | null;
+  category_name: string;
+}
+
+
 
 
 

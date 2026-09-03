@@ -11,14 +11,18 @@ import { ProtectedRoute } from '../../components/auth/ProtectedRoute';
 import { useExpenses } from '../../hooks/useExpenses';
 import { fetchApi } from '../../services/api';
 import { Expense, ExpenseFilterParams } from '../../types/expense';
+import { GroupBillSplitterModal } from '../../components/ai/GroupBillSplitterModal';
+
 
 export default function ExpensesPage() {
   const [filters, setFilters] = useState<ExpenseFilterParams>({ page: 1, limit: 15 });
   const { expenses, meta, isLoading, isError, deleteExpense, isDeleting } = useExpenses(filters);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isGroupSplitModalOpen, setIsGroupSplitModalOpen] = useState(false);
   const [expenseToEdit, setExpenseToEdit] = useState<Expense | null>(null);
   const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null);
+
 
   const handleExportCSV = async () => {
     try {
@@ -51,7 +55,10 @@ export default function ExpensesPage() {
               Review, search, filter, and export your personal transactions
             </p>
           </div>
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <Button variant="outline" onClick={() => setIsGroupSplitModalOpen(true)}>
+              👥 Split Group Bill
+            </Button>
             <Button variant="outline" onClick={handleExportCSV}>
               📥 Export CSV
             </Button>
@@ -59,6 +66,7 @@ export default function ExpensesPage() {
               + Log Expense
             </Button>
           </div>
+
         </div>
 
         {/* Combined Search, Filter & Sort Controls */}
@@ -96,6 +104,14 @@ export default function ExpensesPage() {
           onClose={() => setIsAddModalOpen(false)}
           expenseToEdit={expenseToEdit}
         />
+
+        {/* Group Bill & Debt Splitter Modal */}
+        <GroupBillSplitterModal
+          isOpen={isGroupSplitModalOpen}
+          onClose={() => setIsGroupSplitModalOpen(false)}
+          onLogPersonalShare={() => setIsAddModalOpen(true)}
+        />
+
 
         {/* Delete Confirmation Modal */}
         <ConfirmDialog

@@ -195,10 +195,28 @@ Integrated into the Dashboard ([`AIInsightsWidget.tsx`](file:///d:/Fintrack/fron
 
 ---
 
+## 👥 13. AI Group Bill & Receipt Debt Splitter
+
+* **API Endpoint**: `POST /api/v1/ai/split-bill`
+* **Frontend Component**: [`GroupBillSplitterModal.tsx`](file:///d:/Fintrack/frontend/src/components/ai/GroupBillSplitterModal.tsx)
+* **Integrations**: Receipt Scanner Modal (`ReceiptScannerModal.tsx`), Expenses Page (`app/expenses/page.tsx`), and Expense Form Modal (`ExpenseFormModal.tsx`).
+
+### Capabilities:
+* **Multi-Mode Debt Splitting**:
+  * **Equal Split ⚖️**: Divides bill equally among group members with zero-drift paise rounding preservation.
+  * **Percentage Split %**: Computes exact amounts based on individual custom percentage allocations.
+  * **Custom Amount Split 💰**: Accepts custom rupee amounts per participant while verifying totals.
+* **Debt Settlement Matrix**: Computes net balances and generates clean settlement instructions (e.g. *"Rahul owes ₹350.00 to Samruddhi"*).
+* **WhatsApp Shareable Summary**: 1-Click `📲 Copy WhatsApp Summary` generating formatted text summaries ready to paste directly into group WhatsApp chats.
+* **1-Click Personal Share Expense Logging**: Automatically calculates the user's individual share and pre-fills `ExpenseFormModal.tsx` to log personal outflow.
+
+---
+
 ## 🧪 Verification & Automated Testing
 
 All AI features are backed by automated tests:
-* **Backend Pytest Suite**: `pytest tests/test_ai_api.py -v` (9/9 AI tests passed, 19/19 total backend tests passed).
+* **Backend Pytest Suite**: `pytest tests/test_ai_api.py -v` (10/10 AI tests passed, 20/20 total backend tests passed).
 * **Frontend Build**: `npm run build` (13/13 static routes compiled with 0 errors).
+
 
 

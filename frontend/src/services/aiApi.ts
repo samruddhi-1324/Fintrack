@@ -8,14 +8,23 @@ import {
   ReceiptScanResponse,
   ChatMessage,
   AICopilotResponse,
-  AnomaliesResponse
+  AnomaliesResponse,
+  GroupBillSplitRequest,
+  GroupBillSplitResponse
 } from '../types/ai';
 
 export const aiApi = {
+  splitGroupBill: (data: GroupBillSplitRequest) =>
+    fetchApi<GroupBillSplitResponse>('/ai/split-bill', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }),
+
   getAnomalies: () =>
     fetchApi<AnomaliesResponse>('/ai/anomalies', {
       method: 'GET'
     }),
+
 
   categorize: (title: string) =>
     fetchApi<CategorizeResponse>('/ai/categorize', {

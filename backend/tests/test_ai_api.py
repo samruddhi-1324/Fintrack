@@ -269,5 +269,41 @@ async def test_ai_detected_anomalies(async_client: AsyncClient):
     assert any(a["type"] == "subscription_hike" for a in data["anomalies"])
 
 
+@pytest.mark.asyncio
+async def test_ai_split_group_bill(async_client: AsyncClient):
+    """Test AI Group Bill & Receipt Debt Splitter endpoint."""
+    email = f"split_user_{uuid.uuid4().hex[:6]}@example.com"
+    reg = await async_client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "password": "SecurePassword123!", "full_name": "Split User"}
+    )
+    token = reg.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    payload = {
+        "title": "Weekend Olive Bistro Dinner",
+        "total_amount": 1000.0,
+        "payer_name": "Samruddhi",
+        "participants": ["Samruddhi", "Rahul", "Priya"],
+        "split_mode": "equal"
+    }
+
+    resp = await async_client.post("/api/v1/ai/split-bill", json=payload, headers=headers)
+    assert resp.status_code == 200
+    data = resp.json()
+
+    assert data["title"] == "Weekend Olive Bistro Dinner"
+    assert data["total_amount"] == 1000.0
+    assert data["payer_name"] == "Samruddhi"
+    assert len(data["participants"]) == 3
+    # Check sum of shares equals total bill
+    shares_sum = sum(p["share_amount"] for p in data["participants"])
+    assert round(shares_sum, 2) == 1000.0
+    assert len(data["settlement_transfers"]) == 2
+    assert "whatsapp_summary" in data
+    assert "BILL SPLIT" in data["whatsapp_summary"]
+
+
+
 
 

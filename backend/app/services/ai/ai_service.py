@@ -941,6 +941,153 @@ class AIService:
             "summary_headline": summary
         }
 
+    @classmethod
+    async def split_group_bill(cls, payload: Dict[str, Any], user_id: uuid.UUID, db: AsyncSession) -> Dict[str, Any]:
+        """
+        Calculates equal, percentage, or custom group bill debt splits,
+        computes debt settlement instructions, generates WhatsApp shareable summary,
+        and matches user's personal share to a category for 1-click expense logging.
+        """
+        title = str(payload.get("title", "Group Expense")).strip() or "Group Expense"
+        total_amount = float(payload.get("total_amount", 0.0))
+        payer_name = str(payload.get("payer_name", "You")).strip() or "You"
+        raw_participants = payload.get("participants", ["You", "Friend"])
+        split_mode = str(payload.get("split_mode", "equal")).lower()
+        custom_shares = payload.get("custom_shares", {})
+
+        # Clean participant names preserving order & uniqueness
+        participants = []
+        for p in raw_participants:
+            cleaned = str(p).strip()
+            if cleaned and cleaned not in participants:
+                participants.append(cleaned)
+        
+        if len(participants) < 2:
+            participants = ["You", "Friend"]
+        
+        if payer_name not in participants:
+            participants.insert(0, payer_name)
+
+        num_p = len(participants)
+        shares_map = {}
+
+        if split_mode == "percentage":
+            total_pct = sum(float(custom_shares.get(p, 100.0 / num_p)) for p in participants)
+            for p in participants:
+                pct = float(custom_shares.get(p, 100.0 / num_p))
+                normalized_pct = (pct / total_pct * 100.0) if total_pct > 0 else (100.0 / num_p)
+                share_amt = round((normalized_pct / 100.0) * total_amount, 2)
+                shares_map[p] = (share_amt, round(normalized_pct, 1))
+        elif split_mode == "custom":
+            total_custom = sum(float(custom_shares.get(p, 0.0)) for p in participants)
+            if total_custom <= 0:
+                split_mode = "equal"
+            else:
+                for p in participants:
+                    amt = round(float(custom_shares.get(p, total_amount / num_p)), 2)
+                    pct = round((amt / total_amount) * 100.0, 1) if total_amount > 0 else 0.0
+                    shares_map[p] = (amt, pct)
+
+        if split_mode == "equal":
+            total_cents = int(round(total_amount * 100))
+            base_cents = total_cents // num_p
+            remainder = total_cents % num_p
+
+            for i, p in enumerate(participants):
+                p_cents = base_cents + (1 if i < remainder else 0)
+                share_amt = round(p_cents / 100.0, 2)
+                pct = round((share_amt / total_amount) * 100.0, 1) if total_amount > 0 else 0.0
+                shares_map[p] = (share_amt, pct)
+
+        # Fix penny drift in sum
+        sum_shares = sum(amt for amt, _ in shares_map.values())
+        diff = round(total_amount - sum_shares, 2)
+        if abs(diff) > 0 and payer_name in shares_map:
+            amt, pct = shares_map[payer_name]
+            shares_map[payer_name] = (round(amt + diff, 2), pct)
+
+        participant_shares = []
+        for p in participants:
+            amt, pct = shares_map[p]
+            participant_shares.append({
+                "name": p,
+                "share_amount": amt,
+                "share_percentage": pct,
+                "is_payer": (p.lower() == payer_name.lower())
+            })
+
+        settlements = []
+        for p in participants:
+            if p.lower() != payer_name.lower():
+                owed_amt = shares_map[p][0]
+                if owed_amt > 0:
+                    settlements.append({
+                        "from_name": p,
+                        "to_name": payer_name,
+                        "amount": owed_amt,
+                        "message": f"👉 {p} owes ₹{owed_amt:,.2f} to {payer_name}"
+                    })
+
+        wa_lines = [
+            f"🧾 *BILL SPLIT: {title.upper()}*",
+            f"💰 *Total Bill*: ₹{total_amount:,.2f}",
+            f"👤 *Paid By*: {payer_name}",
+            f"👥 *Split Mode*: {split_mode.capitalize()}",
+            "",
+            "📊 *Individual Breakdown*:"
+        ]
+        for p in participants:
+            amt, pct = shares_map[p]
+            payer_badge = " 💳 (Payer)" if p.lower() == payer_name.lower() else ""
+            wa_lines.append(f"• {p}: ₹{amt:,.2f} ({pct}%){payer_badge}")
+
+        wa_lines.append("")
+        wa_lines.append("💸 *Settlement Instructions*:")
+        for s in settlements:
+            wa_lines.append(s["message"])
+        wa_lines.append("")
+        wa_lines.append("⚡ _Calculated with FinTrack AI Bill Splitter_")
+
+        whatsapp_summary = "\n".join(wa_lines)
+
+        user_personal_share = shares_map.get("You", (0.0, 0.0))[0]
+        if user_personal_share == 0.0 and payer_name in shares_map:
+            user_personal_share = shares_map[payer_name][0]
+
+        cat_result = await db.execute(
+            select(Category).where(Category.user_id == user_id).order_by(Category.name.asc())
+        )
+        cats = cat_result.scalars().all()
+        matched_cat_id = None
+        matched_cat_name = "Group & Social"
+
+        for c in cats:
+            if c.name.lower() in ["food", "dining", "entertainment", "social", "travel", "miscellaneous"]:
+                matched_cat_id = str(c.id)
+                matched_cat_name = c.name
+                break
+        if not matched_cat_id and cats:
+            matched_cat_id = str(cats[0].id)
+            matched_cat_name = cats[0].name
+
+        per_person_equal = round(total_amount / num_p, 2)
+
+        return {
+            "provider": settings.AI_PROVIDER,
+            "title": title,
+            "total_amount": total_amount,
+            "payer_name": payer_name,
+            "split_mode": split_mode,
+            "per_person_equal_share": per_person_equal,
+            "participants": participant_shares,
+            "settlement_transfers": settlements,
+            "whatsapp_summary": whatsapp_summary,
+            "user_personal_share": user_personal_share,
+            "category_id": matched_cat_id,
+            "category_name": matched_cat_name
+        }
+
+
 
 
 

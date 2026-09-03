@@ -16,13 +16,16 @@ from app.schemas.ai import (
     ReceiptScanResponse,
     AICopilotRequest,
     AICopilotResponse,
-    AnomaliesResponse
+    AnomaliesResponse,
+    GroupBillSplitRequest,
+    GroupBillSplitResponse
 )
 from app.services.ai.ai_service import AIService
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
 
 
 @router.get("/anomalies", response_model=AnomaliesResponse, summary="Get AI detected spending anomalies & subscription price hikes")
@@ -215,6 +218,28 @@ async def ask_financial_copilot(
             answer="I encountered an issue analyzing your request. Please try asking again!",
             suggested_followups=["How's my health score?", "Where am I spending most?"]
         )
+
+@router.post("/split-bill", response_model=GroupBillSplitResponse, summary="AI Group Bill & Receipt Debt Splitter")
+async def split_group_bill(
+    payload: GroupBillSplitRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Calculates equal, percentage, or custom group bill debt splits,
+    computes debt settlement instructions, generates a WhatsApp shareable summary,
+    and returns user's personal share for 1-click expense logging.
+    """
+    try:
+        split_result = await AIService.split_group_bill(payload.model_dump(), current_user.id, db)
+        return GroupBillSplitResponse(**split_result)
+    except Exception as e:
+        logger.error(f"Error calculating group bill split: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to calculate group bill split: {str(e)}"
+        )
+
 
 
 

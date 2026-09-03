@@ -21,13 +21,17 @@ interface ReceiptScannerModalProps {
     date?: string;
     notes?: string;
   }) => void;
+  onSplitGroup?: (data: { title: string; amount: number }) => void;
 }
+
 
 export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
   isOpen,
   onClose,
-  onReceiptScanned
+  onReceiptScanned,
+  onSplitGroup
 }) => {
+
   const { categories } = useCategories();
   const { createExpense, isCreating } = useExpenses();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -184,8 +188,22 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
     }
   };
 
+  const handleOpenSplitModal = () => {
+    if (!scanResult || !onSplitGroup) return;
+    const parsedEditable = cleanAmountString(editableAmount);
+    const parsedScanAmt = cleanAmountString(scanResult.amount);
+    const finalAmount = parsedEditable > 0 ? parsedEditable : (parsedScanAmt > 0 ? parsedScanAmt : 0);
+    const finalMerchant = editableMerchant.trim() || scanResult.merchant;
+
+    onSplitGroup({
+      title: finalMerchant,
+      amount: finalAmount
+    });
+    handleModalClose();
+  };
 
   return (
+
     <Modal
       isOpen={isOpen}
       onClose={handleModalClose}
@@ -570,12 +588,18 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
                 Scan Another
               </Button>
 
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {onSplitGroup && (
+                  <Button type="button" variant="secondary" onClick={handleOpenSplitModal}>
+                    👥 Split Bill
+                  </Button>
+                )}
                 {onReceiptScanned && (
                   <Button type="button" variant="secondary" onClick={handleAutoFillForm}>
                     <FileText size={15} /> Fill Form
                   </Button>
                 )}
+
                 <Button type="button" onClick={handleCreateImmediately} isLoading={isCreating}>
                   Log Expense <ArrowRight size={15} />
                 </Button>

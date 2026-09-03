@@ -152,6 +152,43 @@ class AnomaliesResponse(BaseModel):
     anomalies: List[AnomalyItem]
     summary_headline: str
 
+class GroupBillParticipantShare(BaseModel):
+    name: str
+    share_amount: float
+    share_percentage: float
+    is_payer: bool = False
+
+class DebtSettlementItem(BaseModel):
+    from_name: str
+    to_name: str
+    amount: float
+    message: str
+
+class GroupBillSplitRequest(BaseModel):
+    title: str = Field(..., min_length=1, max_length=150, description="Title of bill e.g. Dinner at Olive Bistro")
+    total_amount: float = Field(..., gt=0, description="Total bill amount")
+    payer_name: str = Field(default="You", description="Name of person who paid the bill upfront")
+    participants: List[str] = Field(..., min_length=2, description="List of all group member names including payer")
+
+    split_mode: str = Field(default="equal", description="Split mode: 'equal', 'percentage', or 'custom'")
+    custom_shares: Dict[str, float] = Field(default={}, description="Custom amounts or percentages per participant name")
+    category_name: Optional[str] = Field(default=None, description="Optional category name suggestion")
+
+class GroupBillSplitResponse(BaseModel):
+    provider: str
+    title: str
+    total_amount: float
+    payer_name: str
+    split_mode: str
+    per_person_equal_share: float
+    participants: List[GroupBillParticipantShare]
+    settlement_transfers: List[DebtSettlementItem]
+    whatsapp_summary: str
+    user_personal_share: float
+    category_id: Optional[str] = None
+    category_name: str = "Group & Social"
+
+
 
 
 

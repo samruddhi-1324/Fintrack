@@ -12,9 +12,11 @@ import { useExpenses } from '../../hooks/useExpenses';
 import { useCategories } from '../../hooks/useCategories';
 import { getTodayLocalDateString } from '../../lib/formatters';
 import { aiApi } from '../../services/aiApi';
-import { Sparkles, Wand2, Camera, Mic } from 'lucide-react';
+import { Sparkles, Wand2, Camera, Mic, Users } from 'lucide-react';
 import { ReceiptScannerModal } from '../ai/ReceiptScannerModal';
 import { VoiceLoggerModal } from '../ai/VoiceLoggerModal';
+import { GroupBillSplitterModal } from '../ai/GroupBillSplitterModal';
+
 
 const expenseSchema = z.object({
   title: z
@@ -68,6 +70,8 @@ export default function ExpenseFormModal({
   const [isSuggestingCat, setIsSuggestingCat] = useState<boolean>(false);
   const [isScannerOpen, setIsScannerOpen] = useState<boolean>(false);
   const [isVoiceOpen, setIsVoiceOpen] = useState<boolean>(false);
+  const [isGroupSplitOpen, setIsGroupSplitOpen] = useState<boolean>(false);
+
 
 
   const {
@@ -257,7 +261,28 @@ export default function ExpenseFormModal({
 
                 <button
                   type="button"
+                  onClick={() => setIsGroupSplitOpen(true)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.3rem',
+                    background: 'rgba(16, 185, 129, 0.15)',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    borderRadius: 'var(--radius-md)',
+                    padding: '0.25rem 0.5rem',
+                    color: '#10b981',
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Users size={13} /> 👥 Split Group Bill
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => setIsScannerOpen(true)}
+
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -548,7 +573,21 @@ export default function ExpenseFormModal({
           }
         }}
       />
+
+      {/* AI Group Bill & Debt Splitter Modal */}
+      <GroupBillSplitterModal
+        isOpen={isGroupSplitOpen}
+        onClose={() => setIsGroupSplitOpen(false)}
+        onLogPersonalShare={(parsed) => {
+          setValue('title', parsed.title, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+          setValue('amount', parsed.amount, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+          if (parsed.category_id) {
+            setValue('category_id', parsed.category_id, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+          }
+        }}
+      />
     </Modal>
   );
 }
+
 
