@@ -44,7 +44,64 @@ export const AIAnomaliesWidget: React.FC = () => {
   }
 
   if (isError || !data) {
-    return null;
+    return (
+      <div
+        style={{
+          padding: '1.25rem 1.5rem',
+          backgroundColor: 'var(--bg-card)',
+          border: '1px solid var(--border-color)',
+          borderRadius: 'var(--radius-xl)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '1rem'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div
+            style={{
+              padding: '0.45rem',
+              borderRadius: 'var(--radius-md)',
+              backgroundColor: 'rgba(99, 102, 241, 0.15)',
+              color: 'var(--accent-primary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            <ShieldCheck size={20} />
+          </div>
+          <div>
+            <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+              AI Anomaly & Subscription Price-Hike Detector
+            </div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '0.1rem' }}>
+              Real-time audit active. Log recurring transactions to monitor price hikes & duplicate charges.
+            </div>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => refetch()}
+          style={{
+            padding: '0.4rem 0.75rem',
+            backgroundColor: 'var(--bg-secondary)',
+            border: '1px solid var(--border-color)',
+            borderRadius: 'var(--radius-md)',
+            color: 'var(--text-primary)',
+            fontSize: '0.78rem',
+            fontWeight: 600,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.35rem'
+          }}
+        >
+          <RefreshCw size={13} /> Retry Audit
+        </button>
+      </div>
+    );
   }
 
   const filteredAnomalies = activeTab === 'all'

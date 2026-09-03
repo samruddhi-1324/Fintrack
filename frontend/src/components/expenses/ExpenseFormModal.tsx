@@ -12,8 +12,9 @@ import { useExpenses } from '../../hooks/useExpenses';
 import { useCategories } from '../../hooks/useCategories';
 import { getTodayLocalDateString } from '../../lib/formatters';
 import { aiApi } from '../../services/aiApi';
-import { Sparkles, Wand2, Camera } from 'lucide-react';
+import { Sparkles, Wand2, Camera, Mic } from 'lucide-react';
 import { ReceiptScannerModal } from '../ai/ReceiptScannerModal';
+import { VoiceLoggerModal } from '../ai/VoiceLoggerModal';
 
 const expenseSchema = z.object({
   title: z
@@ -66,6 +67,7 @@ export default function ExpenseFormModal({
   const [aiSuggestedCat, setAiSuggestedCat] = useState<string | null>(null);
   const [isSuggestingCat, setIsSuggestingCat] = useState<boolean>(false);
   const [isScannerOpen, setIsScannerOpen] = useState<boolean>(false);
+  const [isVoiceOpen, setIsVoiceOpen] = useState<boolean>(false);
 
 
   const {
@@ -228,29 +230,51 @@ export default function ExpenseFormModal({
               gap: '0.5rem'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
                 <Sparkles size={14} /> AI Smart Quick-Add
               </span>
-              <button
-                type="button"
-                onClick={() => setIsScannerOpen(true)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.3rem',
-                  background: 'rgba(99, 102, 241, 0.15)',
-                  border: '1px solid rgba(99, 102, 241, 0.3)',
-                  borderRadius: 'var(--radius-md)',
-                  padding: '0.25rem 0.5rem',
-                  color: 'var(--accent-primary)',
-                  fontSize: '0.72rem',
-                  fontWeight: 600,
-                  cursor: 'pointer'
-                }}
-              >
-                <Camera size={13} /> 📷 Scan Receipt OCR
-              </button>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsVoiceOpen(true)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.3rem',
+                    background: 'rgba(236, 72, 153, 0.15)',
+                    border: '1px solid rgba(236, 72, 153, 0.3)',
+                    borderRadius: 'var(--radius-md)',
+                    padding: '0.25rem 0.5rem',
+                    color: '#ec4899',
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Mic size={13} /> 🎙️ Voice Quick-Add
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsScannerOpen(true)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.3rem',
+                    background: 'rgba(99, 102, 241, 0.15)',
+                    border: '1px solid rgba(99, 102, 241, 0.3)',
+                    borderRadius: 'var(--radius-md)',
+                    padding: '0.25rem 0.5rem',
+                    color: 'var(--accent-primary)',
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Camera size={13} /> 📷 Scan Receipt OCR
+                </button>
+              </div>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <input
@@ -473,6 +497,34 @@ export default function ExpenseFormModal({
         isOpen={isScannerOpen}
         onClose={() => setIsScannerOpen(false)}
         onReceiptScanned={(data) => {
+          if (data.title) {
+            setValue('title', data.title, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+          }
+          if (data.amount !== undefined && data.amount !== null) {
+            const parsed = typeof data.amount === 'number' ? data.amount : parseFloat(String(data.amount).replace(/,/g, '').replace(/[^\d.]/g, ''));
+            if (!isNaN(parsed) && parsed > 0) {
+              setValue('amount', parsed as any, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+            }
+          }
+          if (data.payment_mode) {
+            setValue('payment_mode', data.payment_mode, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+          }
+          if (data.category_id) {
+            setValue('category_id', data.category_id, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+          }
+          if (data.date) {
+            setValue('date', data.date, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+          }
+          if (data.notes) {
+            setValue('notes', data.notes, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+          }
+        }}
+      />
+
+      <VoiceLoggerModal
+        isOpen={isVoiceOpen}
+        onClose={() => setIsVoiceOpen(false)}
+        onVoiceParsed={(data) => {
           if (data.title) {
             setValue('title', data.title, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
           }

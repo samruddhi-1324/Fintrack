@@ -159,9 +159,9 @@ class RuleBasedProvider(BaseAIProvider):
         if not text_clean:
             return {"title": "Expense", "amount": 0.0, "payment_mode": "upi", "category": categories[0] if categories else "Miscellaneous"}
 
-        # Extract amount (e.g. 450, 450.50, rs 450, ₹450)
+        # Extract amount (e.g. 450, 450.50, rs 450, 450 rupees, ₹450, 450 bucks)
         amount = 0.0
-        amount_match = re.search(r'(?:rs\.?|₹|inr)?\s*(\d+(?:\.\d{1,2})?)', text_clean, re.IGNORECASE)
+        amount_match = re.search(r'(?:rs\.?|₹|inr|rupees|bucks)?\s*(\d+(?:\.\d{1,2})?)\s*(?:rs\.?|₹|inr|rupees|bucks)?', text_clean, re.IGNORECASE)
         if amount_match:
             try:
                 amount = float(amount_match.group(1))
@@ -179,7 +179,7 @@ class RuleBasedProvider(BaseAIProvider):
             payment_mode = "upi"
 
         # Determine Title (remove extracted amount and payment words)
-        clean_title = re.sub(r'(?:paid|spent|bought|for|with|via|using|rs\.?|₹|inr|\d+(?:\.\d{1,2})?|cash|card|upi|credit|debit|gpay|phonepe|paytm|today|yesterday)', '', text_clean, flags=re.IGNORECASE)
+        clean_title = re.sub(r'(?:paid|spent|bought|for|with|via|using|rs\.?|₹|inr|rupees|bucks|\d+(?:\.\d{1,2})?|cash|card|upi|credit|debit|gpay|phonepe|paytm|today|yesterday|amount)', '', text_clean, flags=re.IGNORECASE)
         clean_title = re.sub(r'\s+', ' ', clean_title).strip()
         if not clean_title or len(clean_title) < 2:
             clean_title = "Expense"

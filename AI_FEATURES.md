@@ -176,9 +176,29 @@ Integrated into the Dashboard ([`AIInsightsWidget.tsx`](file:///d:/Fintrack/fron
 
 ---
 
+## 🎙️ 12. AI Voice-Powered Hands-Free Expense Logger
+
+* **API Endpoint**: `POST /api/v1/ai/parse-expense`
+* **Web Speech Engine**: Web Speech API (`SpeechRecognition` / `webkitSpeechRecognition`) with fallback to browser native voice input.
+* **Frontend Component**: [`VoiceLoggerModal.tsx`](file:///d:/Fintrack/frontend/src/components/ai/VoiceLoggerModal.tsx)
+* **Trigger Access**: Integrated into [`ExpenseFormModal.tsx`](file:///d:/Fintrack/frontend/src/components/expenses/ExpenseFormModal.tsx) via the `🎙️ Voice Quick-Add` microphone button.
+
+### Capabilities:
+* **Natural Spoken Sentence Transcription**: Listens to spoken voice inputs in real-time (e.g. *"Spent 350 rupees for Uber auto to office using UPI"*) and transcribes speech into text without third-party audio API keys.
+* **Multi-Currency Spoken Voice NLP Parsing**: Backend rule engine parses spoken currency variations (`rupees`, `bucks`, `rs`, `₹`, `inr`) and converts sentence details into structured fields:
+  * **Title**: *"Uber auto to office"*
+  * **Amount**: `350.00`
+  * **Payment Mode**: `"upi"`
+  * **Category**: Matched Category UUID (e.g. *Transport*)
+* **Interactive Pulse Waveform UI**: Glassmorphic modal featuring interactive microphone toggle button, dynamic audio pulse visualizer, real-time live transcript display, and editable result summary cards.
+* **1-Click Form Filling & Instant Logging**: User can review the parsed extraction, adjust values if needed, and click **"Fill Form"** to populate the expense modal or **"Log Expense Immediately"**.
+
+---
+
 ## 🧪 Verification & Automated Testing
 
 All AI features are backed by automated tests:
 * **Backend Pytest Suite**: `pytest tests/test_ai_api.py -v` (9/9 AI tests passed, 19/19 total backend tests passed).
 * **Frontend Build**: `npm run build` (13/13 static routes compiled with 0 errors).
+
 
