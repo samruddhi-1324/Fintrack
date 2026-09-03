@@ -38,12 +38,18 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
   const [scanResult, setScanResult] = useState<ReceiptScanResponse | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  // Editable result fields
+  const [editableAmount, setEditableAmount] = useState<string>('');
+  const [editableMerchant, setEditableMerchant] = useState<string>('');
+
   const resetState = () => {
     setSelectedFile(null);
     setImagePreview(null);
     setIsScanning(false);
     setScanResult(null);
     setErrorMsg(null);
+    setEditableAmount('');
+    setEditableMerchant('');
   };
 
   const handleModalClose = () => {
@@ -88,6 +94,8 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
     try {
       const result = await aiApi.scanReceipt(selectedFile);
       setScanResult(result);
+      setEditableAmount(result.amount > 0 ? String(result.amount) : '');
+      setEditableMerchant(result.merchant || 'Receipt Store');
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to scan receipt image. Please try again.');
     } finally {
@@ -97,6 +105,9 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
 
   const handleAutoFillForm = () => {
     if (!scanResult) return;
+
+    const finalAmount = Number(editableAmount) > 0 ? Number(editableAmount) : scanResult.amount;
+    const finalMerchant = editableMerchant.trim() || scanResult.merchant;
 
     let matchedCatId = scanResult.category_id;
     if (!matchedCatId && scanResult.category) {
@@ -109,12 +120,12 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
 
     if (onReceiptScanned) {
       onReceiptScanned({
-        title: scanResult.merchant || 'Receipt Expense',
-        amount: scanResult.amount,
+        title: finalMerchant,
+        amount: finalAmount,
         payment_mode: scanResult.payment_mode || 'card',
         category_id: matchedCatId || (categories.length > 0 ? categories[0].id : undefined),
         date: scanResult.date || undefined,
-        notes: scanResult.raw_text ? `Scanned via AI OCR: ${scanResult.merchant}` : undefined
+        notes: scanResult.raw_text ? `Scanned via AI OCR: ${finalMerchant}` : undefined
       });
     }
 
@@ -123,6 +134,14 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
 
   const handleCreateImmediately = async () => {
     if (!scanResult) return;
+
+    const finalAmount = Number(editableAmount) > 0 ? Number(editableAmount) : scanResult.amount;
+    const finalMerchant = editableMerchant.trim() || scanResult.merchant;
+
+    if (finalAmount <= 0) {
+      setErrorMsg('Please enter a valid expense amount greater than 0.');
+      return;
+    }
 
     let matchedCatId = scanResult.category_id;
     if (!matchedCatId && scanResult.category) {
@@ -137,8 +156,8 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
 
     try {
       await createExpense({
-        title: scanResult.merchant || 'Receipt Expense',
-        amount: scanResult.amount,
+        title: finalMerchant,
+        amount: finalAmount,
         category_id: catIdToUse,
         date: scanResult.date || new Date().toISOString().split('T')[0],
         payment_mode: scanResult.payment_mode || 'card',
@@ -149,6 +168,7 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
       setErrorMsg(err.message || 'Failed to log expense immediately.');
     }
   };
+
 
   return (
     <Modal
@@ -340,6 +360,27 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
         {/* Scan Results Card */}
         {scanResult && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {scanResult.provider === 'rule_based' && (
+              <div
+                style={{
+                  padding: '0.65rem 0.85rem',
+                  backgroundColor: 'rgba(245, 158, 11, 0.12)',
+                  border: '1px solid rgba(245, 158, 11, 0.3)',
+                  borderRadius: 'var(--radius-md)',
+                  fontSize: '0.75rem',
+                  color: 'var(--text-secondary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}
+              >
+                <span>💡</span>
+                <span>
+                  <strong>Offline OCR Fallback Active:</strong> Add <code>GEMINI_API_KEY</code> to <code>backend/.env</code> for full multi-modal AI receipt reading. Verify or edit details below:
+                </span>
+              </div>
+            )}
+
             <div
               style={{
                 padding: '1.25rem',
@@ -351,22 +392,54 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
                 gap: '1rem'
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Extracted Merchant
-                  </span>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '0.15rem' }}>
-                    {scanResult.merchant}
-                  </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                <div style={{ flex: 1, minWidth: '160px' }}>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Merchant / Title
+                  </label>
+                  <input
+                    type="text"
+                    value={editableMerchant}
+                    onChange={(e) => setEditableMerchant(e.target.value)}
+                    placeholder="Merchant Name"
+                    style={{
+                      width: '100%',
+                      fontSize: '1.05rem',
+                      fontWeight: 700,
+                      color: 'var(--text-primary)',
+                      marginTop: '0.25rem',
+                      backgroundColor: 'var(--bg-card)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: 'var(--radius-md)',
+                      padding: '0.4rem 0.6rem'
+                    }}
+                  />
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Total Amount</span>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--accent-success)', marginTop: '0.15rem' }}>
-                    {formatCurrency(scanResult.amount)}
-                  </div>
+                <div style={{ flex: 1, minWidth: '140px' }}>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--accent-success)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Total Amount (₹) *
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={editableAmount}
+                    onChange={(e) => setEditableAmount(e.target.value)}
+                    placeholder="Enter amount (₹)"
+                    style={{
+                      width: '100%',
+                      fontSize: '1.05rem',
+                      fontWeight: 800,
+                      color: 'var(--accent-success)',
+                      marginTop: '0.25rem',
+                      backgroundColor: 'var(--bg-card)',
+                      border: editableAmount === '' || Number(editableAmount) === 0 ? '1px solid var(--accent-warning)' : '1px solid var(--border-color)',
+                      borderRadius: 'var(--radius-md)',
+                      padding: '0.4rem 0.6rem'
+                    }}
+                  />
                 </div>
               </div>
+
 
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--border-color)' }}>
                 <div

@@ -215,15 +215,30 @@ class RuleBasedProvider(BaseAIProvider):
         line_items = []
 
         if raw_text_sample:
-            # Extract total amount
-            amt_match = re.search(r'(?:total|amount|due|paid|net)\s*[:=]?\s*(?:rs\.?|₹|inr)?\s*(\d+(?:\.\d{1,2})?)', raw_text_sample, re.IGNORECASE)
+            # Extract total amount with support for commas and currency symbols
+            amt_match = re.search(r'(?:total|amount|due|paid|net|rs\.?|₹|inr)\s*[:=]?\s*([\d,]+(?:\.\d{1,2})?)', raw_text_sample, re.IGNORECASE)
             if amt_match:
                 try:
-                    amount = float(amt_match.group(1))
+                    clean_str = amt_match.group(1).replace(',', '')
+                    amount = float(clean_str)
                 except ValueError:
                     amount = 0.0
 
-            # Extract merchant name (first line)
+            if amount == 0.0:
+                # Find any isolated numbers in text
+                all_nums = re.findall(r'\b\d+(?:\.\d{1,2})?\b', raw_text_sample)
+                valid_nums = []
+                for n in all_nums:
+                    try:
+                        v = float(n)
+                        if v > 0 and v < 1000000:
+                            valid_nums.append(v)
+                    except ValueError:
+                        pass
+                if valid_nums:
+                    amount = max(valid_nums)
+
+            # Extract merchant name (first non-empty line)
             lines = [line.strip() for line in raw_text_sample.splitlines() if line.strip()]
             if lines:
                 merchant = lines[0][:40]
@@ -235,7 +250,7 @@ class RuleBasedProvider(BaseAIProvider):
 
             # Payment mode
             raw_lower = raw_text_sample.lower()
-            if "upi" in raw_lower or "gpay" in raw_lower:
+            if "upi" in raw_lower or "gpay" in raw_lower or "phonepe" in raw_lower:
                 payment_mode = "upi"
             elif "cash" in raw_lower:
                 payment_mode = "cash"
@@ -252,4 +267,5 @@ class RuleBasedProvider(BaseAIProvider):
             "line_items": line_items,
             "raw_text": raw_text_sample if len(raw_text_sample) < 500 else raw_text_sample[:500] + "..."
         }
+
 

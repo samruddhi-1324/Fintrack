@@ -1,6 +1,8 @@
 import json
+import re
 import logging
 from typing import List, Dict, Any, Optional
+
 import google.generativeai as genai
 from app.core.config import settings
 from app.services.ai.base import BaseAIProvider
@@ -204,16 +206,45 @@ class GeminiProvider(BaseAIProvider):
                         matched_category = c
                         break
 
+            # Parse and clean extracted amount safely
+            raw_amount = data.get("amount", 0.0)
+            parsed_amount = 0.0
+            if isinstance(raw_amount, (int, float)):
+                parsed_amount = float(raw_amount)
+            elif isinstance(raw_amount, str):
+                try:
+                    parsed_amount = float(re.sub(r'[^\d.]', '', raw_amount.replace(',', '')))
+                except ValueError:
+                    parsed_amount = 0.0
+
+            line_items = data.get("line_items", [])
+            # Fallback to sum of line items if total amount is 0
+            if parsed_amount == 0.0 and line_items:
+                total_items = 0.0
+                for item in line_items:
+                    if isinstance(item, dict):
+                        p = item.get("price", 0.0)
+                        if isinstance(p, (int, float)):
+                            total_items += float(p)
+                        elif isinstance(p, str):
+                            try:
+                                total_items += float(re.sub(r'[^\d.]', '', p.replace(',', '')))
+                            except ValueError:
+                                pass
+                if total_items > 0:
+                    parsed_amount = round(total_items, 2)
+
             return {
                 "merchant": str(data.get("merchant", "Receipt Store")),
-                "amount": float(data.get("amount", 0.0)),
+                "amount": parsed_amount,
                 "date": data.get("date"),
                 "payment_mode": str(data.get("payment_mode", "card")).lower(),
                 "category": matched_category,
                 "confidence": float(data.get("confidence", 0.90)),
-                "line_items": data.get("line_items", []),
+                "line_items": line_items,
                 "raw_text": data.get("raw_text", "Scanned via Gemini AI Vision OCR")
             }
+
         except Exception as e:
             logger.warning(f"Gemini receipt scanning failed: {e}. Falling back to rule-based scanner.", exc_info=False)
             return await self.fallback.scan_receipt(image_bytes, mime_type, categories)
