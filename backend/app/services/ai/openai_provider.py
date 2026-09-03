@@ -148,3 +148,62 @@ class OpenAIProvider(BaseAIProvider):
         except Exception as e:
             logger.warning(f"OpenAI natural language parsing failed: {e}. Falling back to rule-based.", exc_info=False)
             return await self.fallback.parse_natural_language_expense(text, categories)
+
+    async def scan_receipt(self, image_bytes: bytes, mime_type: str, categories: List[str]) -> Dict[str, Any]:
+        if not self.client or not self.api_key:
+            return await self.fallback.scan_receipt(image_bytes, mime_type, categories)
+
+        import base64
+        base64_image = base64.b64encode(image_bytes).decode('utf-8')
+        image_url = f"data:{mime_type};base64,{base64_image}"
+
+        prompt = f"""
+        Analyze this receipt image for an expense tracker.
+        Available Categories: {json.dumps(categories)}
+        Payment mode MUST be strictly: "cash", "card", or "upi".
+
+        Respond ONLY in JSON format:
+        {{
+            "merchant": "Merchant Name",
+            "amount": 1250.50,
+            "date": "YYYY-MM-DD" or null,
+            "payment_mode": "card",
+            "category": "Matched Category Name",
+            "confidence": 0.95,
+            "line_items": [
+                {{"name": "Item Description", "price": 450.00}}
+            ],
+            "raw_text": "Extracted summary"
+        }}
+        """
+
+        try:
+            response = await self.client.chat.completions.create(
+                model=self.model_name,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": prompt},
+                            {"type": "image_url", "image_url": {"url": image_url}}
+                        ]
+                    }
+                ],
+                response_format={"type": "json_object"},
+                temperature=0.1
+            )
+            data = json.loads(response.choices[0].message.content)
+            return {
+                "merchant": str(data.get("merchant", "Receipt Store")),
+                "amount": float(data.get("amount", 0.0)),
+                "date": data.get("date"),
+                "payment_mode": str(data.get("payment_mode", "card")).lower(),
+                "category": data.get("category", categories[0] if categories else "Miscellaneous"),
+                "confidence": float(data.get("confidence", 0.90)),
+                "line_items": data.get("line_items", []),
+                "raw_text": data.get("raw_text", "Scanned via OpenAI Vision")
+            }
+        except Exception as e:
+            logger.warning(f"OpenAI receipt scanning failed: {e}. Falling back to rule-based.", exc_info=False)
+            return await self.fallback.scan_receipt(image_bytes, mime_type, categories)
+

@@ -155,3 +155,66 @@ class GeminiProvider(BaseAIProvider):
         except Exception as e:
             logger.warning(f"Gemini natural language parsing failed: {e}. Falling back to rule-based.", exc_info=False)
             return await self.fallback.parse_natural_language_expense(text, categories)
+
+    async def scan_receipt(self, image_bytes: bytes, mime_type: str, categories: List[str]) -> Dict[str, Any]:
+        if not self.model or not self.api_key:
+            return await self.fallback.scan_receipt(image_bytes, mime_type, categories)
+
+        prompt = f"""
+        You are an expert AI Receipt & Invoice OCR Parser for personal finance tracking in India.
+        Analyze this receipt image carefully and extract all transaction details.
+
+        Available User Categories: {json.dumps(categories)}
+        Payment mode MUST be strictly one of: "cash", "card", or "upi" (default to "card" or "upi" if detected).
+
+        Respond ONLY with a valid JSON object matching this exact schema:
+        {{
+            "merchant": "Store or Merchant Name (e.g. Starbucks, DMart, Shell Fuel)",
+            "amount": 1250.50,
+            "date": "YYYY-MM-DD" or null,
+            "payment_mode": "card",
+            "category": "Best matching category name from available categories list",
+            "confidence": 0.95,
+            "line_items": [
+                {{"name": "Item Description", "price": 450.00}}
+            ],
+            "raw_text": "Brief extracted text transcript summary"
+        }}
+        """
+
+        try:
+            image_part = {
+                "mime_type": mime_type,
+                "data": image_bytes
+            }
+            response = self.model.generate_content(
+                [prompt, image_part],
+                generation_config=genai.GenerationConfig(
+                    response_mime_type="application/json",
+                    temperature=0.1
+                )
+            )
+            data = json.loads(response.text)
+            
+            raw_category = data.get("category", categories[0] if categories else "Miscellaneous")
+            matched_category = raw_category
+            if raw_category not in categories:
+                for c in categories:
+                    if c.lower() in raw_category.lower() or raw_category.lower() in c.lower():
+                        matched_category = c
+                        break
+
+            return {
+                "merchant": str(data.get("merchant", "Receipt Store")),
+                "amount": float(data.get("amount", 0.0)),
+                "date": data.get("date"),
+                "payment_mode": str(data.get("payment_mode", "card")).lower(),
+                "category": matched_category,
+                "confidence": float(data.get("confidence", 0.90)),
+                "line_items": data.get("line_items", []),
+                "raw_text": data.get("raw_text", "Scanned via Gemini AI Vision OCR")
+            }
+        except Exception as e:
+            logger.warning(f"Gemini receipt scanning failed: {e}. Falling back to rule-based scanner.", exc_info=False)
+            return await self.fallback.scan_receipt(image_bytes, mime_type, categories)
+

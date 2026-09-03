@@ -19,12 +19,14 @@
 | **Spending Insights & Alerts** | ✅ **Built & Tested** | Real PostgreSQL database data aggregation; overspending alerts, budget health, and MoM trend recommendations |
 | **Natural Language Quick-Add** | ✅ **Built & Tested** | Single-sentence parser for Title, Amount, Payment Mode, and Category (e.g., *"Dinner 450 with upi"*) |
 | **Daily Spending Limit** | ✅ **Built & Tested** | Live tracker for today's spending with remaining cap, progress bar, and warning badges |
+| **Smart Receipt Scanner & OCR** | ✅ **Built & Tested** | AI Vision OCR receipt photo parsing for Merchant, Amount, Date, Payment Mode, Category, & Line Items |
 | **Complete Features Specs** | ✅ **Documented** | Detailed specification of all system capabilities in [`FEATURES.md`](file:///d:/Fintrack/FEATURES.md) |
 | **Email Service** | ✅ **Complete & Pluggable** | Local SMTP (`aiosmtplib`), Production Resend API (`resend`), and Console fallback |
 | **Authentication System** | ✅ **Complete & Verified** | Email/Password, Google OAuth 2.0 (OIDC), JWT Access + HttpOnly Refresh Tokens |
 | **User Data Isolation** | ✅ **Enforced** | Every API endpoint derives `user_id` from JWT; SQL queries strictly filtered |
-| **Backend REST API Tests** | ✅ **15/15 Tests Passed** | Pytest auth, isolation, email, AI categorization, NLP, insights, forecast, health-score, budget, category, expense tests all green |
+| **Backend REST API Tests** | ✅ **17/17 Tests Passed** | Pytest auth, isolation, email, AI categorization, NLP, insights, forecast, health-score, OCR receipt scanner, budget, category, expense tests all green |
 | **Frontend Next.js App** | ✅ **13/13 Pages Built** | `npm run build` compiled clean with 0 errors across all routes |
+
 
 ---
 

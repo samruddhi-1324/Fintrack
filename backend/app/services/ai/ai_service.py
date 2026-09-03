@@ -671,5 +671,35 @@ class AIService:
             "actionable_tips": actionable_tips
         }
 
+    @classmethod
+    async def scan_receipt_image(cls, user_id: uuid.UUID, image_bytes: bytes, mime_type: str, db: AsyncSession) -> Dict[str, Any]:
+        """
+        Fetch authentic user categories and scan receipt image via active AI Vision provider.
+        Resolves category UUID if available.
+        """
+        result = await db.execute(
+            select(Category).where(Category.user_id == user_id).order_by(Category.name.asc())
+        )
+        user_categories = result.scalars().all()
+        category_names = [c.name for c in user_categories]
+        if not category_names:
+            category_names = ["Food", "Transport", "Utilities", "Entertainment", "Housing", "Miscellaneous"]
+
+        provider = cls.get_provider()
+        parsed_receipt = await provider.scan_receipt(image_bytes, mime_type, category_names)
+
+        # Match category name to category_id
+        matched_cat_id = None
+        predicted_cat_name = parsed_receipt.get("category", "")
+        for cat in user_categories:
+            if cat.name.lower() == predicted_cat_name.lower():
+                matched_cat_id = str(cat.id)
+                break
+
+        parsed_receipt["category_id"] = matched_cat_id
+        parsed_receipt["provider"] = settings.AI_PROVIDER
+        return parsed_receipt
+
+
 
 

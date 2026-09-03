@@ -34,3 +34,22 @@ class BaseAIProvider(ABC):
         Returns: {"title": str, "amount": float, "payment_mode": Optional[str], "category": Optional[str]}
         """
         pass
+
+    @abstractmethod
+    async def scan_receipt(self, image_bytes: bytes, mime_type: str, categories: List[str]) -> Dict[str, Any]:
+        """
+        Performs AI Vision OCR on a receipt image to extract merchant, total amount,
+        transaction date, payment mode, matched category, line items, and confidence.
+        Returns: {
+            "merchant": str,
+            "amount": float,
+            "date": Optional[str],
+            "payment_mode": str,
+            "category": str,
+            "confidence": float,
+            "line_items": List[Dict[str, Any]],
+            "raw_text": Optional[str]
+        }
+        """
+        pass
+

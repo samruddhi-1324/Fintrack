@@ -12,7 +12,8 @@ import { useExpenses } from '../../hooks/useExpenses';
 import { useCategories } from '../../hooks/useCategories';
 import { getTodayLocalDateString } from '../../lib/formatters';
 import { aiApi } from '../../services/aiApi';
-import { Sparkles, Wand2 } from 'lucide-react';
+import { Sparkles, Wand2, Camera } from 'lucide-react';
+import { ReceiptScannerModal } from '../ai/ReceiptScannerModal';
 
 const expenseSchema = z.object({
   title: z
@@ -59,11 +60,13 @@ export default function ExpenseFormModal({
   const { createExpense, updateExpense, isCreating, isUpdating } = useExpenses();
   const [formError, setFormError] = useState<string>('');
   
-  // AI NLP & Smart Suggestion States
+  // AI NLP, OCR & Smart Suggestion States
   const [nlpInput, setNlpInput] = useState<string>('');
   const [isParsingNlp, setIsParsingNlp] = useState<boolean>(false);
   const [aiSuggestedCat, setAiSuggestedCat] = useState<string | null>(null);
   const [isSuggestingCat, setIsSuggestingCat] = useState<boolean>(false);
+  const [isScannerOpen, setIsScannerOpen] = useState<boolean>(false);
+
 
   const {
     register,
@@ -212,7 +215,7 @@ export default function ExpenseFormModal({
       title={expenseToEdit ? 'Edit Expense' : 'Add New Expense'}
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        {/* AI Smart Quick Add Natural Language Bar */}
+        {/* AI Smart Quick Add Natural Language & Receipt Scanner Bar */}
         {!expenseToEdit && (
           <div
             style={{
@@ -229,9 +232,25 @@ export default function ExpenseFormModal({
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
                 <Sparkles size={14} /> AI Smart Quick-Add
               </span>
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
-                Type naturally (e.g. &ldquo;Dinner 450 with upi&rdquo;)
-              </span>
+              <button
+                type="button"
+                onClick={() => setIsScannerOpen(true)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                  background: 'rgba(99, 102, 241, 0.15)',
+                  border: '1px solid rgba(99, 102, 241, 0.3)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '0.25rem 0.5rem',
+                  color: 'var(--accent-primary)',
+                  fontSize: '0.72rem',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                <Camera size={13} /> 📷 Scan Receipt OCR
+              </button>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <input
@@ -279,6 +298,7 @@ export default function ExpenseFormModal({
             </div>
           </div>
         )}
+
 
         <form onSubmit={handleSubmit(onSubmit, onInvalid)} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {formError && (
@@ -448,6 +468,20 @@ export default function ExpenseFormModal({
         </div>
       </form>
       </div>
+
+      <ReceiptScannerModal
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        onReceiptScanned={(data) => {
+          if (data.title) setValue('title', data.title, { shouldValidate: true });
+          if (data.amount > 0) setValue('amount', data.amount as any, { shouldValidate: true });
+          if (data.payment_mode) setValue('payment_mode', data.payment_mode, { shouldValidate: true });
+          if (data.category_id) setValue('category_id', data.category_id, { shouldValidate: true });
+          if (data.date) setValue('date', data.date, { shouldValidate: true });
+          if (data.notes) setValue('notes', data.notes, { shouldValidate: true });
+        }}
+      />
     </Modal>
   );
 }
+

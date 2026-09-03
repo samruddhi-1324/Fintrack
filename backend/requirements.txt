@@ -36,3 +36,7 @@ resend
 # AI Providers (Pluggable: Gemini / OpenAI)
 google-generativeai
 openai
+
+# File Upload / Form Data Parsing
+python-multipart
+

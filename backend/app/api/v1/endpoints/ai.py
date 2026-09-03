@@ -1,5 +1,5 @@
 import logging
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -12,7 +12,8 @@ from app.schemas.ai import (
     NaturalLanguageExpenseResponse,
     AIInsightsResponse,
     ExpenseForecastResponse,
-    FinancialHealthScoreResponse
+    FinancialHealthScoreResponse,
+    ReceiptScanResponse
 )
 from app.services.ai.ai_service import AIService
 
@@ -117,4 +118,51 @@ async def parse_expense_nlp(
             category="Miscellaneous",
             category_id=None
         )
+
+@router.post("/scan-receipt", response_model=ReceiptScanResponse, summary="Scan receipt image via AI Vision OCR")
+async def scan_receipt_ocr(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Analyzes an uploaded receipt image (JPEG, PNG, WEBP) using AI Vision OCR
+    and extracts merchant name, total amount, transaction date, payment mode,
+    matched category, line items, and raw text.
+    """
+    # 1. Validate MIME type
+    allowed_types = ["image/jpeg", "image/png", "image/webp", "image/pjpeg", "image/x-png"]
+    content_type = file.content_type or "image/jpeg"
+    
+    if content_type.lower() not in allowed_types and not file.filename.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid image format. Supported formats: JPEG, PNG, WEBP."
+        )
+
+    # 2. Read file bytes and check max file size (10 MB)
+    image_bytes = await file.read()
+    max_bytes = 10 * 1024 * 1024  # 10 MB
+    if len(image_bytes) > max_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File size exceeds maximum allowed limit of 10 MB."
+        )
+
+    if len(image_bytes) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Uploaded file is empty."
+        )
+
+    try:
+        parsed_receipt = await AIService.scan_receipt_image(current_user.id, image_bytes, content_type, db)
+        return ReceiptScanResponse(**parsed_receipt)
+    except Exception as e:
+        logger.error(f"Error scanning receipt image: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to process receipt image via AI Vision OCR: {str(e)}"
+        )
+
 

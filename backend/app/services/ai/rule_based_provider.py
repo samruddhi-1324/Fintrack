@@ -193,3 +193,63 @@ class RuleBasedProvider(BaseAIProvider):
             "payment_mode": payment_mode,
             "category": cat_result.get("category")
         }
+
+    async def scan_receipt(self, image_bytes: bytes, mime_type: str, categories: List[str]) -> Dict[str, Any]:
+        """
+        Deterministic fallback OCR / Receipt scanner.
+        Used when LLM keys are unavailable or for test execution.
+        Attempts basic text pattern parsing if string bytes provided, or returns structured default.
+        """
+        raw_text_sample = ""
+        try:
+            # Try to decode ascii/utf-8 text strings if text file or simple image bytes
+            raw_text_sample = image_bytes.decode("utf-8", errors="ignore")
+        except Exception:
+            raw_text_sample = ""
+
+        # Default fallback values
+        merchant = "Store / Restaurant"
+        amount = 0.0
+        payment_mode = "card"
+        date_str = None
+        line_items = []
+
+        if raw_text_sample:
+            # Extract total amount
+            amt_match = re.search(r'(?:total|amount|due|paid|net)\s*[:=]?\s*(?:rs\.?|₹|inr)?\s*(\d+(?:\.\d{1,2})?)', raw_text_sample, re.IGNORECASE)
+            if amt_match:
+                try:
+                    amount = float(amt_match.group(1))
+                except ValueError:
+                    amount = 0.0
+
+            # Extract merchant name (first line)
+            lines = [line.strip() for line in raw_text_sample.splitlines() if line.strip()]
+            if lines:
+                merchant = lines[0][:40]
+
+            # Extract date (YYYY-MM-DD or DD/MM/YYYY)
+            date_match = re.search(r'(\d{4}-\d{2}-\d{2})|(\d{1,2}[\/\.-]\d{1,2}[\/\.-]\d{2,4})', raw_text_sample)
+            if date_match:
+                date_str = date_match.group(0)
+
+            # Payment mode
+            raw_lower = raw_text_sample.lower()
+            if "upi" in raw_lower or "gpay" in raw_lower:
+                payment_mode = "upi"
+            elif "cash" in raw_lower:
+                payment_mode = "cash"
+
+        cat_res = await self.categorize_expense(merchant, categories)
+
+        return {
+            "merchant": merchant,
+            "amount": amount,
+            "date": date_str,
+            "payment_mode": payment_mode,
+            "category": cat_res.get("category", categories[0] if categories else "Miscellaneous"),
+            "confidence": 0.65 if amount > 0 else 0.40,
+            "line_items": line_items,
+            "raw_text": raw_text_sample if len(raw_text_sample) < 500 else raw_text_sample[:500] + "..."
+        }
+

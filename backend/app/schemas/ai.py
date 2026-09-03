@@ -99,5 +99,22 @@ class FinancialHealthScoreResponse(BaseModel):
     pillars: List[FinancialHealthPillar]
     actionable_tips: List[str]
 
+class ReceiptLineItem(BaseModel):
+    name: str
+    price: float
+
+class ReceiptScanResponse(BaseModel):
+    provider: str
+    merchant: str
+    amount: float
+    date: Optional[str] = None  # YYYY-MM-DD
+    payment_mode: str  # "cash" | "card" | "upi"
+    category: str
+    category_id: Optional[str] = None
+    confidence: float  # 0.0 - 1.0
+    line_items: List[ReceiptLineItem] = []
+    raw_text: Optional[str] = None
+
+
 
 

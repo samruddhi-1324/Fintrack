@@ -4,7 +4,8 @@ import {
   NaturalLanguageExpenseResponse,
   AIInsightsResponse,
   ExpenseForecastResponse,
-  FinancialHealthScoreResponse
+  FinancialHealthScoreResponse,
+  ReceiptScanResponse
 } from '../types/ai';
 
 export const aiApi = {
@@ -33,7 +34,17 @@ export const aiApi = {
     fetchApi<NaturalLanguageExpenseResponse>('/ai/parse-expense', {
       method: 'POST',
       body: JSON.stringify({ text })
-    })
+    }),
+
+  scanReceipt: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return fetchApi<ReceiptScanResponse>('/ai/scan-receipt', {
+      method: 'POST',
+      body: formData
+    });
+  }
 };
+
 
 

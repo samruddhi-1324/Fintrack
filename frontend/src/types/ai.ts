@@ -101,6 +101,25 @@ export interface FinancialHealthScoreResponse {
   actionable_tips: string[];
 }
 
+export interface ReceiptLineItem {
+  name: string;
+  price: number;
+}
+
+export interface ReceiptScanResponse {
+  provider: string;
+  merchant: string;
+  amount: number;
+  date?: string | null;
+  payment_mode: 'cash' | 'card' | 'upi';
+  category: string;
+  category_id?: string | null;
+  confidence: number;
+  line_items: ReceiptLineItem[];
+  raw_text?: string | null;
+}
+
+
 
 
 

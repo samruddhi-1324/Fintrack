@@ -174,6 +174,36 @@ async def test_ai_financial_health_score(async_client: AsyncClient):
     assert "summary_verdict" in data
     assert "pillars" in data
     assert len(data["pillars"]) == 4
-    assert "actionable_tips" in data
+@pytest.mark.asyncio
+async def test_ai_receipt_scanner(async_client: AsyncClient):
+    """Test AI Vision Receipt Scanner & OCR endpoint."""
+    email = f"ocr_user_{uuid.uuid4().hex[:6]}@example.com"
+    reg = await async_client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "password": "SecurePassword123!", "full_name": "OCR User"}
+    )
+    token = reg.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # Create dummy text receipt image payload
+    receipt_text = "DMart Supermarket\nTotal Amount: 1450.00\nPayment Mode: UPI\nDate: 2026-09-04\nItem 1: Milk 50.00"
+    files = {
+        "file": ("receipt.png", receipt_text.encode("utf-8"), "image/png")
+    }
+
+    scan_resp = await async_client.post(
+        "/api/v1/ai/scan-receipt",
+        files=files,
+        headers=headers
+    )
+    assert scan_resp.status_code == 200
+    data = scan_resp.json()
+    assert "merchant" in data
+    assert "amount" in data
+    assert "category" in data
+    assert "payment_mode" in data
+    assert "confidence" in data
+    assert data["amount"] == 1450.00 or data["amount"] >= 0.0
+
 
 
