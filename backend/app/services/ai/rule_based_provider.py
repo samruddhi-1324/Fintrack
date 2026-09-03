@@ -215,23 +215,44 @@ class RuleBasedProvider(BaseAIProvider):
         line_items = []
 
         if raw_text_sample:
-            # Extract total amount with support for commas and currency symbols
-            amt_match = re.search(r'(?:total|amount|due|paid|net|rs\.?|₹|inr)\s*[:=]?\s*([\d,]+(?:\.\d{1,2})?)', raw_text_sample, re.IGNORECASE)
-            if amt_match:
+            # 1. Search for explicit GRAND TOTAL / NET AMOUNT keywords first
+            grand_total_match = re.search(
+                r'(?:grand\s*total|net\s*total|total\s*amount\s*paid|net\s*amount|final\s*total|total\s*due|amount\s*paid|bill\s*total)\s*[:=]?\s*(?:rs\.?|₹|inr)?\s*([\d,]+(?:\.\d{1,2})?)',
+                raw_text_sample,
+                re.IGNORECASE
+            )
+            if grand_total_match:
                 try:
-                    clean_str = amt_match.group(1).replace(',', '')
+                    clean_str = grand_total_match.group(1).replace(',', '')
                     amount = float(clean_str)
                 except ValueError:
                     amount = 0.0
 
+            # 2. If grand total keyword not found, search for generic TOTAL (search from bottom up)
             if amount == 0.0:
-                # Find any isolated numbers in text
+                tot_matches = re.findall(
+                    r'(?:total)\s*[:=]?\s*(?:rs\.?|₹|inr)?\s*([\d,]+(?:\.\d{1,2})?)',
+                    raw_text_sample,
+                    re.IGNORECASE
+                )
+                if tot_matches:
+                    for m in reversed(tot_matches):
+                        try:
+                            v = float(m.replace(',', ''))
+                            if v > 0:
+                                amount = v
+                                break
+                        except ValueError:
+                            pass
+
+            # 3. Fallback to largest valid number in text
+            if amount == 0.0:
                 all_nums = re.findall(r'\b\d+(?:\.\d{1,2})?\b', raw_text_sample)
                 valid_nums = []
                 for n in all_nums:
                     try:
                         v = float(n)
-                        if v > 0 and v < 1000000:
+                        if 0 < v < 1000000:
                             valid_nums.append(v)
                     except ValueError:
                         pass
@@ -309,6 +330,13 @@ class RuleBasedProvider(BaseAIProvider):
                     f"💸 Your highest spending category this month is **{top_cat}** at **₹{top_amt:,.2f}** ({top_pct:.1f}% of total spend).\n\n"
                     f"**Category Breakdown:**\n" +
                     "\n".join([f"* **{c}**: ₹{a:,.2f}" for c, a in sorted_cats[:4]])
+                )
+            elif top_expenses:
+                top_exp = top_expenses[0]
+                answer = (
+                    f"💸 Your highest logged expense is **{top_exp['title']}** ({top_exp['category']}) at **₹{top_exp['amount']:,.2f}**.\n\n"
+                    f"**Top Logged Expenses:**\n" +
+                    "\n".join([f"* **{e['title']}** ({e['category']}): ₹{e['amount']:,.2f}" for e in top_expenses[:4]])
                 )
             else:
                 answer = "You haven't logged any expenses yet this month. Add an expense or scan a receipt to unlock spending breakdown analytics!"

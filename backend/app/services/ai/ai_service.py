@@ -254,6 +254,7 @@ class AIService:
             "provider": settings.AI_PROVIDER,
             "model": settings.GEMINI_MODEL if settings.AI_PROVIDER == "gemini" else settings.OPENAI_MODEL,
             "sentiment": sentiment,
+            "category_totals": category_totals,
             "summary": {
                 "total_current_month": curr_month_total,
                 "total_previous_month": prev_month_total,
@@ -263,6 +264,7 @@ class AIService:
             "insights": insights,
             "budget_recommendations": budget_recommendations
         }
+
 
     @classmethod
     async def get_expense_forecast(cls, user_id: uuid.UUID, db: AsyncSession) -> Dict[str, Any]:
@@ -741,11 +743,21 @@ class AIService:
             for exp, cat_name in top_exp_query.all()
         ]
 
+        cat_totals = insights_data.get("category_totals", {})
+        if not cat_totals:
+            all_time_query = await db.execute(
+                select(Category.name, func.coalesce(func.sum(Expense.amount), 0).label("total_spent"))
+                .join(Expense, Expense.category_id == Category.id)
+                .where(Category.user_id == user_id)
+                .group_by(Category.name)
+            )
+            cat_totals = {row[0]: float(row[1]) for row in all_time_query.all() if float(row[1]) > 0}
+
         financial_context = {
             "total_current_month": insights_data["summary"]["total_current_month"],
             "total_previous_month": insights_data["summary"]["total_previous_month"],
             "total_budget": insights_data["summary"]["total_budget"],
-            "category_totals": insights_data.get("category_totals", {}),
+            "category_totals": cat_totals,
             "daily_burn_rate": forecast_data["daily_burn_rate"],
             "recommended_safe_daily_spend": forecast_data["recommended_safe_daily_spend"],
             "health_score": health_data["score"],
@@ -756,6 +768,7 @@ class AIService:
 
         provider = cls.get_provider()
         res = await provider.ask_copilot(question, chat_history, financial_context)
+
         res["provider"] = settings.AI_PROVIDER
         return res
 

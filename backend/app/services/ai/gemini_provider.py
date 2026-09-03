@@ -169,6 +169,11 @@ class GeminiProvider(BaseAIProvider):
         Available User Categories: {json.dumps(categories)}
         Payment mode MUST be strictly one of: "cash", "card", or "upi" (default to "card" or "upi" if detected).
 
+        CRITICAL INSTRUCTIONS FOR TOTAL AMOUNT:
+        - The "amount" field MUST strictly be the FINAL GRAND TOTAL / NET AMOUNT PAID on the receipt (including all taxes, GST, service charges, tips, and after applying any discounts).
+        - Look specifically for keywords like "GRAND TOTAL", "TOTAL AMOUNT PAID", "NET TOTAL", "TOTAL DUE", "FINAL TOTAL", "AMOUNT PAID", "BILL TOTAL", or "TOTAL".
+        - NEVER use the Subtotal, CGST/SGST Tax amount, Savings amount, or an individual line item price as the overall "amount".
+
         Respond ONLY with a valid JSON object matching this exact schema:
         {{
             "merchant": "Store or Merchant Name (e.g. Starbucks, DMart, Shell Fuel)",

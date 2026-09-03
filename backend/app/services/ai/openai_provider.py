@@ -162,6 +162,11 @@ class OpenAIProvider(BaseAIProvider):
         Available Categories: {json.dumps(categories)}
         Payment mode MUST be strictly: "cash", "card", or "upi".
 
+        CRITICAL INSTRUCTIONS FOR TOTAL AMOUNT:
+        - The "amount" field MUST strictly be the FINAL GRAND TOTAL / NET AMOUNT PAID on the receipt (including all taxes, GST, service charges, tips, and after applying any discounts).
+        - Look specifically for keywords like "GRAND TOTAL", "TOTAL AMOUNT PAID", "NET TOTAL", "TOTAL DUE", "FINAL TOTAL", "AMOUNT PAID", "BILL TOTAL", or "TOTAL".
+        - NEVER use the Subtotal, CGST/SGST Tax amount, Savings amount, or individual line item prices as the overall "amount".
+
         Respond ONLY in JSON format:
         {{
             "merchant": "Merchant Name",

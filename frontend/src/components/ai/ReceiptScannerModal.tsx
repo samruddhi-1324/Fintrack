@@ -41,6 +41,8 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
   // Editable result fields
   const [editableAmount, setEditableAmount] = useState<string>('');
   const [editableMerchant, setEditableMerchant] = useState<string>('');
+  const [editableCategory, setEditableCategory] = useState<string>('');
+  const [editableDate, setEditableDate] = useState<string>('');
 
   const resetState = () => {
     setSelectedFile(null);
@@ -50,6 +52,8 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
     setErrorMsg(null);
     setEditableAmount('');
     setEditableMerchant('');
+    setEditableCategory('');
+    setEditableDate('');
   };
 
   const handleModalClose = () => {
@@ -96,6 +100,19 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
       setScanResult(result);
       setEditableAmount(result.amount > 0 ? String(result.amount) : '');
       setEditableMerchant(result.merchant || 'Receipt Store');
+
+      let matchedCatId = result.category_id || '';
+      if (!matchedCatId && result.category) {
+        const matched = categories.find(
+          (c) => c.name.toLowerCase() === result.category.toLowerCase() ||
+                 c.name.toLowerCase().includes(result.category.toLowerCase()) ||
+                 result.category.toLowerCase().includes(c.name.toLowerCase())
+        );
+        if (matched) matchedCatId = matched.id;
+      }
+      setEditableCategory(matchedCatId || (categories.length > 0 ? categories[0].id : ''));
+      setEditableDate(result.date ? (result.date.includes('T') ? result.date.split('T')[0] : result.date) : new Date().toISOString().split('T')[0]);
+
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to scan receipt image. Please try again.');
     } finally {
@@ -108,23 +125,16 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
 
     const finalAmount = Number(editableAmount) > 0 ? Number(editableAmount) : scanResult.amount;
     const finalMerchant = editableMerchant.trim() || scanResult.merchant;
-
-    let matchedCatId = scanResult.category_id;
-    if (!matchedCatId && scanResult.category) {
-      const matched = categories.find(
-        (c) => c.name.toLowerCase() === scanResult.category.toLowerCase() ||
-               c.name.toLowerCase().includes(scanResult.category.toLowerCase())
-      );
-      if (matched) matchedCatId = matched.id;
-    }
+    const finalCatId = editableCategory || (categories.length > 0 ? categories[0].id : undefined);
+    const finalDate = editableDate || new Date().toISOString().split('T')[0];
 
     if (onReceiptScanned) {
       onReceiptScanned({
         title: finalMerchant,
         amount: finalAmount,
         payment_mode: scanResult.payment_mode || 'card',
-        category_id: matchedCatId || (categories.length > 0 ? categories[0].id : undefined),
-        date: scanResult.date || undefined,
+        category_id: finalCatId,
+        date: finalDate,
         notes: scanResult.raw_text ? `Scanned via AI OCR: ${finalMerchant}` : undefined
       });
     }
@@ -137,29 +147,20 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
 
     const finalAmount = Number(editableAmount) > 0 ? Number(editableAmount) : scanResult.amount;
     const finalMerchant = editableMerchant.trim() || scanResult.merchant;
+    const finalCatId = editableCategory || (categories.length > 0 ? categories[0].id : '');
+    const finalDate = editableDate || new Date().toISOString().split('T')[0];
 
     if (finalAmount <= 0) {
       setErrorMsg('Please enter a valid expense amount greater than 0.');
       return;
     }
 
-    let matchedCatId = scanResult.category_id;
-    if (!matchedCatId && scanResult.category) {
-      const matched = categories.find(
-        (c) => c.name.toLowerCase() === scanResult.category.toLowerCase() ||
-               c.name.toLowerCase().includes(scanResult.category.toLowerCase())
-      );
-      if (matched) matchedCatId = matched.id;
-    }
-
-    const catIdToUse = matchedCatId || (categories.length > 0 ? categories[0].id : '');
-
     try {
       await createExpense({
         title: finalMerchant,
         amount: finalAmount,
-        category_id: catIdToUse,
-        date: scanResult.date || new Date().toISOString().split('T')[0],
+        category_id: finalCatId,
+        date: finalDate,
         payment_mode: scanResult.payment_mode || 'card',
         notes: `Smart AI Receipt OCR Scan`
       });
@@ -392,8 +393,8 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
                 gap: '1rem'
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                <div style={{ flex: 1, minWidth: '160px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.875rem' }}>
+                <div>
                   <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Merchant / Title
                   </label>
@@ -404,18 +405,19 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
                     placeholder="Merchant Name"
                     style={{
                       width: '100%',
-                      fontSize: '1.05rem',
-                      fontWeight: 700,
+                      fontSize: '0.95rem',
+                      fontWeight: 600,
                       color: 'var(--text-primary)',
                       marginTop: '0.25rem',
                       backgroundColor: 'var(--bg-card)',
                       border: '1px solid var(--border-color)',
                       borderRadius: 'var(--radius-md)',
-                      padding: '0.4rem 0.6rem'
+                      padding: '0.45rem 0.65rem'
                     }}
                   />
                 </div>
-                <div style={{ flex: 1, minWidth: '140px' }}>
+
+                <div>
                   <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--accent-success)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Total Amount (₹) *
                   </label>
@@ -427,37 +429,69 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
                     placeholder="Enter amount (₹)"
                     style={{
                       width: '100%',
-                      fontSize: '1.05rem',
-                      fontWeight: 800,
+                      fontSize: '0.95rem',
+                      fontWeight: 700,
                       color: 'var(--accent-success)',
                       marginTop: '0.25rem',
                       backgroundColor: 'var(--bg-card)',
                       border: editableAmount === '' || Number(editableAmount) === 0 ? '1px solid var(--accent-warning)' : '1px solid var(--border-color)',
                       borderRadius: 'var(--radius-md)',
-                      padding: '0.4rem 0.6rem'
+                      padding: '0.45rem 0.65rem'
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Category
+                  </label>
+                  <select
+                    value={editableCategory}
+                    onChange={(e) => setEditableCategory(e.target.value)}
+                    style={{
+                      width: '100%',
+                      fontSize: '0.95rem',
+                      fontWeight: 600,
+                      color: 'var(--text-primary)',
+                      marginTop: '0.25rem',
+                      backgroundColor: 'var(--bg-card)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: 'var(--radius-md)',
+                      padding: '0.45rem 0.65rem'
+                    }}
+                  >
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Transaction Date
+                  </label>
+                  <input
+                    type="date"
+                    value={editableDate}
+                    onChange={(e) => setEditableDate(e.target.value)}
+                    style={{
+                      width: '100%',
+                      fontSize: '0.95rem',
+                      fontWeight: 600,
+                      color: 'var(--text-primary)',
+                      marginTop: '0.25rem',
+                      backgroundColor: 'var(--bg-card)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: 'var(--radius-md)',
+                      padding: '0.45rem 0.65rem'
                     }}
                   />
                 </div>
               </div>
 
-
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--border-color)' }}>
-                <div
-                  style={{
-                    padding: '0.35rem 0.65rem',
-                    backgroundColor: 'rgba(99, 102, 241, 0.12)',
-                    color: 'var(--accent-primary)',
-                    borderRadius: 'var(--radius-md)',
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.25rem'
-                  }}
-                >
-                  <ShoppingBag size={12} /> Category: {scanResult.category}
-                </div>
-
                 <div
                   style={{
                     padding: '0.35rem 0.65rem',
@@ -471,7 +505,7 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
                     gap: '0.25rem'
                   }}
                 >
-                  <CheckCircle2 size={12} /> Confidence: {Math.round(scanResult.confidence * 100)}%
+                  <CheckCircle2 size={12} /> AI Confidence: {Math.round(scanResult.confidence * 100)}%
                 </div>
 
                 <div
@@ -485,24 +519,8 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
                     fontWeight: 500
                   }}
                 >
-                  Payment: {scanResult.payment_mode.toUpperCase()}
+                  Payment Mode: {scanResult.payment_mode.toUpperCase()}
                 </div>
-
-                {scanResult.date && (
-                  <div
-                    style={{
-                      padding: '0.35rem 0.65rem',
-                      backgroundColor: 'var(--bg-card)',
-                      border: '1px solid var(--border-color)',
-                      color: 'var(--text-secondary)',
-                      borderRadius: 'var(--radius-md)',
-                      fontSize: '0.75rem',
-                      fontWeight: 500
-                    }}
-                  >
-                    Date: {scanResult.date}
-                  </div>
-                )}
               </div>
 
               {scanResult.line_items && scanResult.line_items.length > 0 && (
