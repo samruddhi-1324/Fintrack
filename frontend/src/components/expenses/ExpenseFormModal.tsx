@@ -473,12 +473,27 @@ export default function ExpenseFormModal({
         isOpen={isScannerOpen}
         onClose={() => setIsScannerOpen(false)}
         onReceiptScanned={(data) => {
-          if (data.title) setValue('title', data.title, { shouldValidate: true });
-          if (data.amount > 0) setValue('amount', data.amount as any, { shouldValidate: true });
-          if (data.payment_mode) setValue('payment_mode', data.payment_mode, { shouldValidate: true });
-          if (data.category_id) setValue('category_id', data.category_id, { shouldValidate: true });
-          if (data.date) setValue('date', data.date, { shouldValidate: true });
-          if (data.notes) setValue('notes', data.notes, { shouldValidate: true });
+          if (data.title) {
+            setValue('title', data.title, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+          }
+          if (data.amount !== undefined && data.amount !== null) {
+            const parsed = typeof data.amount === 'number' ? data.amount : parseFloat(String(data.amount).replace(/,/g, '').replace(/[^\d.]/g, ''));
+            if (!isNaN(parsed) && parsed > 0) {
+              setValue('amount', parsed as any, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+            }
+          }
+          if (data.payment_mode) {
+            setValue('payment_mode', data.payment_mode, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+          }
+          if (data.category_id) {
+            setValue('category_id', data.category_id, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+          }
+          if (data.date) {
+            setValue('date', data.date, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+          }
+          if (data.notes) {
+            setValue('notes', data.notes, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+          }
         }}
       />
     </Modal>

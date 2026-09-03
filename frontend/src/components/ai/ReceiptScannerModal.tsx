@@ -89,6 +89,14 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
     }
   };
 
+  const cleanAmountString = (val: string | number | undefined | null): number => {
+    if (val === undefined || val === null) return 0;
+    if (typeof val === 'number') return isNaN(val) ? 0 : val;
+    const sanitized = String(val).replace(/,/g, '').replace(/[^\d.]/g, '');
+    const parsed = parseFloat(sanitized);
+    return isNaN(parsed) ? 0 : parsed;
+  };
+
   const handleScanReceipt = async () => {
     if (!selectedFile) return;
 
@@ -98,7 +106,9 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
     try {
       const result = await aiApi.scanReceipt(selectedFile);
       setScanResult(result);
-      setEditableAmount(result.amount > 0 ? String(result.amount) : '');
+
+      const parsedAmt = cleanAmountString(result.amount);
+      setEditableAmount(parsedAmt > 0 ? String(parsedAmt) : (result.amount ? String(result.amount) : ''));
       setEditableMerchant(result.merchant || 'Receipt Store');
 
       let matchedCatId = result.category_id || '';
@@ -123,7 +133,9 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
   const handleAutoFillForm = () => {
     if (!scanResult) return;
 
-    const finalAmount = Number(editableAmount) > 0 ? Number(editableAmount) : scanResult.amount;
+    const parsedEditable = cleanAmountString(editableAmount);
+    const parsedScanAmt = cleanAmountString(scanResult.amount);
+    const finalAmount = parsedEditable > 0 ? parsedEditable : (parsedScanAmt > 0 ? parsedScanAmt : 0);
     const finalMerchant = editableMerchant.trim() || scanResult.merchant;
     const finalCatId = editableCategory || (categories.length > 0 ? categories[0].id : undefined);
     const finalDate = editableDate || new Date().toISOString().split('T')[0];
@@ -145,7 +157,9 @@ export const ReceiptScannerModal: React.FC<ReceiptScannerModalProps> = ({
   const handleCreateImmediately = async () => {
     if (!scanResult) return;
 
-    const finalAmount = Number(editableAmount) > 0 ? Number(editableAmount) : scanResult.amount;
+    const parsedEditable = cleanAmountString(editableAmount);
+    const parsedScanAmt = cleanAmountString(scanResult.amount);
+    const finalAmount = parsedEditable > 0 ? parsedEditable : (parsedScanAmt > 0 ? parsedScanAmt : 0);
     const finalMerchant = editableMerchant.trim() || scanResult.merchant;
     const finalCatId = editableCategory || (categories.length > 0 ? categories[0].id : '');
     const finalDate = editableDate || new Date().toISOString().split('T')[0];

@@ -202,10 +202,19 @@ class RuleBasedProvider(BaseAIProvider):
         """
         raw_text_sample = ""
         try:
-            # Try to decode ascii/utf-8 text strings if text file or simple image bytes
-            raw_text_sample = image_bytes.decode("utf-8", errors="ignore")
+            import io
+            from PIL import Image
+            img = Image.open(io.BytesIO(image_bytes))
+            try:
+                import pytesseract
+                raw_text_sample = pytesseract.image_to_string(img)
+            except Exception:
+                raw_text_sample = ""
         except Exception:
-            raw_text_sample = ""
+            try:
+                raw_text_sample = image_bytes.decode("utf-8", errors="ignore")
+            except Exception:
+                raw_text_sample = ""
 
         # Default fallback values
         merchant = "Store / Restaurant"
