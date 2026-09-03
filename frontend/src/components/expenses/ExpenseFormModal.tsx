@@ -11,6 +11,8 @@ import { Expense } from '../../types/expense';
 import { useExpenses } from '../../hooks/useExpenses';
 import { useCategories } from '../../hooks/useCategories';
 import { getTodayLocalDateString } from '../../lib/formatters';
+import { aiApi } from '../../services/aiApi';
+import { Sparkles, Wand2 } from 'lucide-react';
 
 const expenseSchema = z.object({
   title: z
@@ -56,12 +58,19 @@ export default function ExpenseFormModal({
   const { categories, isLoading: isCategoriesLoading } = useCategories();
   const { createExpense, updateExpense, isCreating, isUpdating } = useExpenses();
   const [formError, setFormError] = useState<string>('');
+  
+  // AI NLP & Smart Suggestion States
+  const [nlpInput, setNlpInput] = useState<string>('');
+  const [isParsingNlp, setIsParsingNlp] = useState<boolean>(false);
+  const [aiSuggestedCat, setAiSuggestedCat] = useState<string | null>(null);
+  const [isSuggestingCat, setIsSuggestingCat] = useState<boolean>(false);
 
   const {
     register,
     handleSubmit,
     reset,
     setValue,
+    watch,
     formState: { errors }
   } = useForm<ExpenseFormData>({
     resolver: zodResolver(expenseSchema),
@@ -75,8 +84,65 @@ export default function ExpenseFormModal({
     }
   });
 
+  const currentTitle = watch('title');
+
+  // Handle AI Quick-Add Sentence Parsing
+  const handleQuickAddNLP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nlpInput.trim()) return;
+
+    setIsParsingNlp(true);
+    setFormError('');
+    try {
+      const parsed = await aiApi.parseExpenseNLP(nlpInput.trim());
+      if (parsed.title) setValue('title', parsed.title, { shouldValidate: true });
+      if (parsed.amount > 0) setValue('amount', parsed.amount as any, { shouldValidate: true });
+      if (parsed.payment_mode) setValue('payment_mode', parsed.payment_mode, { shouldValidate: true });
+
+      // Match category ID if returned or suggest
+      if (parsed.category_id) {
+        setValue('category_id', parsed.category_id, { shouldValidate: true });
+      } else if (parsed.category) {
+        const matched = categories.find((c) => c.name.toLowerCase() === parsed.category?.toLowerCase());
+        if (matched) {
+          setValue('category_id', matched.id, { shouldValidate: true });
+        }
+      }
+      setNlpInput('');
+    } catch (err) {
+      console.warn('AI Quick Add parse failed, fallback available.');
+    } finally {
+      setIsParsingNlp(false);
+    }
+  };
+
+  // Trigger Smart Category Suggestion from Title
+  const handleAutoSuggestCategory = async () => {
+    if (!currentTitle || currentTitle.trim().length < 2) return;
+    setIsSuggestingCat(true);
+    try {
+      const res = await aiApi.categorize(currentTitle.trim());
+      if (res && res.category) {
+        setAiSuggestedCat(res.category);
+        const matched = categories.find(
+          (c) => c.name.toLowerCase() === res.category.toLowerCase() ||
+                 c.name.toLowerCase().includes(res.category.toLowerCase())
+        );
+        if (matched) {
+          setValue('category_id', matched.id, { shouldValidate: true });
+        }
+      }
+    } catch (e) {
+      console.warn('Auto categorize failed:', e);
+    } finally {
+      setIsSuggestingCat(false);
+    }
+  };
+
   useEffect(() => {
     setFormError('');
+    setAiSuggestedCat(null);
+    setNlpInput('');
     if (isOpen) {
       if (expenseToEdit) {
         reset({
@@ -145,63 +211,160 @@ export default function ExpenseFormModal({
       onClose={onClose}
       title={expenseToEdit ? 'Edit Expense' : 'Add New Expense'}
     >
-      <form onSubmit={handleSubmit(onSubmit, onInvalid)} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        {formError && (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        {/* AI Smart Quick Add Natural Language Bar */}
+        {!expenseToEdit && (
           <div
             style={{
-              padding: '0.75rem',
-              backgroundColor: 'rgba(239, 68, 68, 0.15)',
-              border: '1px solid var(--accent-danger)',
-              borderRadius: 'var(--radius-md)',
-              color: 'var(--accent-danger)',
-              fontSize: '0.875rem'
+              padding: '0.75rem 1rem',
+              background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(139, 92, 246, 0.12))',
+              border: '1px solid rgba(99, 102, 241, 0.25)',
+              borderRadius: 'var(--radius-lg)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.5rem'
             }}
           >
-            ⚠️ {formError}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                <Sparkles size={14} /> AI Smart Quick-Add
+              </span>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
+                Type naturally (e.g. &ldquo;Dinner 450 with upi&rdquo;)
+              </span>
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <input
+                type="text"
+                value={nlpInput}
+                onChange={(e) => setNlpInput(e.target.value)}
+                placeholder="e.g. Domino's pizza 650 with card"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleQuickAddNLP(e);
+                  }
+                }}
+                style={{
+                  flex: 1,
+                  backgroundColor: 'var(--bg-secondary)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '0.5rem 0.75rem',
+                  fontSize: '0.85rem'
+                }}
+              />
+              <button
+                type="button"
+                onClick={(e) => handleQuickAddNLP(e)}
+                disabled={isParsingNlp || !nlpInput.trim()}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.25rem',
+                  padding: '0.5rem 0.75rem',
+                  backgroundColor: 'var(--accent-primary)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 'var(--radius-md)',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  opacity: isParsingNlp || !nlpInput.trim() ? 0.6 : 1
+                }}
+              >
+                <Wand2 size={13} /> {isParsingNlp ? 'Parsing...' : 'Fill'}
+              </button>
+            </div>
           </div>
         )}
 
-        <Input
-          label="Title / Merchant *"
-          placeholder="e.g. D-Mart Groceries, Uber Ride"
-          {...register('title')}
-          error={errors.title?.message}
-        />
-
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          <div style={{ flex: 1, minWidth: '180px', display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
-            <label style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-secondary)' }}>
-              Category *
-            </label>
-            <select
-              {...register('category_id')}
-              disabled={isCategoriesLoading || categories.length === 0}
+        <form onSubmit={handleSubmit(onSubmit, onInvalid)} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {formError && (
+            <div
               style={{
-                backgroundColor: 'var(--bg-secondary)',
-                color: 'var(--text-primary)',
-                border: errors.category_id ? '1px solid var(--accent-danger)' : '1px solid var(--border-color)',
+                padding: '0.75rem',
+                backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                border: '1px solid var(--accent-danger)',
                 borderRadius: 'var(--radius-md)',
-                padding: '0.625rem 0.875rem',
-                fontSize: '0.875rem',
-                minHeight: '44px'
+                color: 'var(--accent-danger)',
+                fontSize: '0.875rem'
               }}
             >
-              {categories.length === 0 ? (
-                <option value="">{isCategoriesLoading ? 'Loading categories...' : 'No categories available'}</option>
-              ) : (
-                categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))
+              ⚠️ {formError}
+            </div>
+          )}
+
+          <Input
+            label="Title / Merchant *"
+            placeholder="e.g. D-Mart Groceries, Uber Ride"
+            {...register('title')}
+            error={errors.title?.message}
+          />
+
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: '180px', display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <label style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-secondary)' }}>
+                  Category *
+                </label>
+                {currentTitle && currentTitle.trim().length > 1 && (
+                  <button
+                    type="button"
+                    onClick={handleAutoSuggestCategory}
+                    disabled={isSuggestingCat}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--accent-primary)',
+                      fontSize: '0.75rem',
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      padding: 0
+                    }}
+                  >
+                    <Sparkles size={11} /> {isSuggestingCat ? 'Matching...' : 'AI Suggest'}
+                  </button>
+                )}
+              </div>
+              <select
+                {...register('category_id')}
+                disabled={isCategoriesLoading || categories.length === 0}
+                style={{
+                  backgroundColor: 'var(--bg-secondary)',
+                  color: 'var(--text-primary)',
+                  border: errors.category_id ? '1px solid var(--accent-danger)' : '1px solid var(--border-color)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '0.625rem 0.875rem',
+                  fontSize: '0.875rem',
+                  minHeight: '44px'
+                }}
+              >
+                {categories.length === 0 ? (
+                  <option value="">{isCategoriesLoading ? 'Loading categories...' : 'No categories available'}</option>
+                ) : (
+                  categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))
+                )}
+              </select>
+              {aiSuggestedCat && (
+                <span style={{ fontSize: '0.72rem', color: 'var(--accent-primary)' }}>
+                  ✨ AI Matched: {aiSuggestedCat}
+                </span>
               )}
-            </select>
-            {errors.category_id && (
-              <span style={{ fontSize: '0.75rem', color: 'var(--accent-danger)' }}>
-                {errors.category_id.message}
-              </span>
-            )}
-          </div>
+              {errors.category_id && (
+                <span style={{ fontSize: '0.75rem', color: 'var(--accent-danger)' }}>
+                  {errors.category_id.message}
+                </span>
+              )}
+            </div>
 
           <div style={{ flex: 1, minWidth: '180px' }}>
             <Input
@@ -284,6 +447,7 @@ export default function ExpenseFormModal({
           </Button>
         </div>
       </form>
+      </div>
     </Modal>
   );
 }

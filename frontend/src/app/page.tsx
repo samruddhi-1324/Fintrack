@@ -7,6 +7,9 @@ import DailyLimitWidget from '../components/dashboard/DailyLimitWidget';
 import PaymentMethodBreakdownWidget from '../components/dashboard/PaymentMethodBreakdownWidget';
 import RecentExpensesSnapshot from '../components/dashboard/RecentExpensesSnapshot';
 import MoMComparisonWidget from '../components/dashboard/MoMComparisonWidget';
+import { AIInsightsWidget } from '../components/ai/AIInsightsWidget';
+import { AIForecastWidget } from '../components/ai/AIForecastWidget';
+import { FinancialHealthScoreWidget } from '../components/ai/FinancialHealthScoreWidget';
 import { ProtectedRoute } from '../components/auth/ProtectedRoute';
 import { useDashboard } from '../hooks/useDashboard';
 
@@ -26,6 +29,15 @@ export default function DashboardPage() {
           </div>
         ) : (
           <>
+            {/* AI Insights & Emotional Sentiment Widget */}
+            <AIInsightsWidget />
+
+            {/* AI Financial Health Score (0-100) */}
+            <FinancialHealthScoreWidget />
+
+            {/* AI Predictive Expense Forecast Widget */}
+            <AIForecastWidget />
+
             {/* Daily Spending Limit Widget */}
             <DailyLimitWidget dailyStatus={summary.daily_limit_status} />
 

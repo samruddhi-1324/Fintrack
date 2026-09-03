@@ -20,48 +20,82 @@ type BudgetFormData = z.infer<typeof budgetSchema>;
 interface BudgetFormModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialCategoryId?: string;
+  initialAmount?: number;
 }
 
-export default function BudgetFormModal({ isOpen, onClose }: BudgetFormModalProps) {
+export default function BudgetFormModal({
+  isOpen,
+  onClose,
+  initialCategoryId,
+  initialAmount
+}: BudgetFormModalProps) {
   const { categories } = useCategories();
   const { setBudget, isSetting } = useBudgets();
+
+  const [formError, setFormError] = React.useState<string>('');
 
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
     setError,
     formState: { errors }
   } = useForm<BudgetFormData>({
     resolver: zodResolver(budgetSchema),
     defaultValues: {
-      category_id: '',
-      amount: 10000
+      category_id: initialCategoryId || '',
+      amount: initialAmount || 10000
     }
   });
 
   useEffect(() => {
+    setFormError('');
     if (isOpen) {
-      reset({ category_id: '', amount: 10000 });
+      const catId = initialCategoryId || '';
+      const amt = initialAmount || 10000;
+      reset({
+        category_id: catId,
+        amount: amt
+      });
+      setValue('category_id', catId);
+      setValue('amount', amt as any);
     }
-  }, [isOpen, reset]);
+  }, [isOpen, initialCategoryId, initialAmount, reset, setValue]);
 
   const onSubmit = async (data: BudgetFormData) => {
+    setFormError('');
     try {
       await setBudget({
-        category_id: data.category_id || null,
-        amount: data.amount,
+        category_id: data.category_id && data.category_id.trim().length > 0 ? data.category_id : null,
+        amount: Number(data.amount),
         period: 'monthly'
       });
       onClose();
     } catch (err: any) {
-      setError('amount', { message: err.message || 'Failed to save budget goal' });
+      setFormError(err.message || 'Failed to save budget goal. Please try again.');
     }
   };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Set Monthly Spending Budget">
       <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        {formError && (
+          <div
+            style={{
+              padding: '0.75rem',
+              backgroundColor: 'rgba(239, 68, 68, 0.15)',
+              border: '1px solid var(--accent-danger)',
+              borderRadius: 'var(--radius-md)',
+              color: 'var(--accent-danger)',
+              fontSize: '0.875rem'
+            }}
+          >
+            ⚠️ {formError}
+          </div>
+        )}
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
           <label style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-secondary)' }}>
             Target Budget Scope

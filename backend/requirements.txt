@@ -29,4 +29,10 @@ google-auth
 requests
 email-validator
 
+# Email Service
+aiosmtplib
+resend
 
+# AI Providers (Pluggable: Gemini / OpenAI)
+google-generativeai
+openai

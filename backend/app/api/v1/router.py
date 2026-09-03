@@ -7,7 +7,8 @@ from app.api.v1.endpoints import (
     budgets,
     dashboard,
     reports,
-    export
+    export,
+    ai
 )
 
 api_router = APIRouter()
@@ -20,4 +21,6 @@ api_router.include_router(budgets.router, prefix="/budgets", tags=["Budgets"])
 api_router.include_router(dashboard.router, prefix="/dashboard", tags=["Dashboard"])
 api_router.include_router(reports.router, prefix="/reports", tags=["Reports"])
 api_router.include_router(export.router, prefix="/export", tags=["Export"])
+api_router.include_router(ai.router, prefix="/ai", tags=["AI Recommendations"])
+
 

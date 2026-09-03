@@ -53,6 +53,14 @@ class Settings(BaseSettings):
     # Resend API Settings (Production)
     RESEND_API_KEY: str = ""
     
+    # Pluggable AI Provider Settings (Gemini / OpenAI / Rule-Based)
+    AI_PROVIDER: str = "gemini"
+    AI_ENABLED: bool = True
+    GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-1.5-flash"
+    OPENAI_API_KEY: str = ""
+    OPENAI_MODEL: str = "gpt-4o-mini"
+    
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
 settings = Settings()

@@ -210,7 +210,17 @@ Each requirement below corresponds to the PRD's FR-ID for traceability.
 |---|---|---|
 | FR-31 | The system shall not use hardcoded or demo data at any stage; all data (expenses, categories, budgets, reports) shall be dynamically created, stored, and fetched from the live data layer | P0 |
 
-### 3.9 Field-Level Validation Rules
+### 3.9 AI Recommendations & Smart Features (Pluggable Provider Architecture)
+
+| ID | Requirement | Priority |
+|---|---|---|
+| FR-AI-1 | The system shall provide real-time Smart Auto-Categorization predicting the best matching category from an expense title | P1 |
+| FR-AI-2 | The system shall analyze the user's authentic PostgreSQL transaction history and generate actionable spending insights, anomaly alerts, and savings recommendations | P1 |
+| FR-AI-3 | The system shall provide intelligent budget recommendations based on historical average monthly category spending | P1 |
+| FR-AI-4 | The system shall support natural language "Smart Quick Add" expense parsing (extracting title, amount, payment mode, and category from a single sentence) | P2 |
+| FR-AI-5 | The system shall utilize a pluggable AI provider architecture supporting Google Gemini (default), OpenAI / ChatGPT, and deterministic offline rule-based fallback without hardcoded keys or logic | P0 |
+
+### 3.10 Field-Level Validation Rules
 
 | Field | Rule |
 |---|---|

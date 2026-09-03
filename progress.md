@@ -1,43 +1,56 @@
 # FinTrack — Project Progress & Memory State Log
 
-**Last Updated:** September 2, 2026
+**Last Updated:** September 3, 2026
 
-This document records the exact state of **FinTrack** as of **September 2, 2026**. Use this file when resuming work in a new session.
+This document records the exact state of **FinTrack** as of **September 3, 2026**. Use this file when resuming work in a new session.
 
 ---
 
-## 🎯 Project Status Overview: **Pluggable Local SMTP & Resend Email Delivery Service 100% Complete**
+## 🎯 Project Status Overview: **Pluggable Multi-Provider AI Recommendation & Smart Insights 100% Complete**
 
 | Component | Platform / Status | Details / Config |
 |---|---|---|
+| **AI Recommendation System** | ✅ **Complete & Pluggable** | Multi-provider architecture supporting Google Gemini (default), OpenAI / ChatGPT, and rule-based offline fallback |
+| **Smart Auto-Categorization** | ✅ **Built & Tested** | Instant category prediction from expense titles with auto-selection chip in form modal |
+| **Spending Insights & Alerts** | ✅ **Built & Tested** | Real PostgreSQL database data aggregation; overspending alerts, budget health, and MoM trend recommendations |
+| **Natural Language Quick-Add** | ✅ **Built & Tested** | Single-sentence parser for Title, Amount, Payment Mode, and Category (e.g., *"Dinner 450 with upi"*) |
 | **Email Service** | ✅ **Complete & Pluggable** | Local SMTP (`aiosmtplib`), Production Resend API (`resend`), and Console fallback |
-| **Password Reset Email** | ✅ **HTML Template Built** | Branded responsive HTML email with CTA link (`/reset-password?token=...`) |
 | **Authentication System** | ✅ **Complete & Verified** | Email/Password, Google OAuth 2.0 (OIDC), JWT Access + HttpOnly Refresh Tokens |
 | **User Data Isolation** | ✅ **Enforced** | Every API endpoint derives `user_id` from JWT; SQL queries strictly filtered |
-| **Database Tables & Migrations** | ✅ **Migrated** | PostgreSQL updated via Alembic `003_add_auth_tables_and_user_fks` |
-| **Backend REST API** | ✅ **10/10 Tests Passed** | Pytest auth, isolation, email dispatch, budget, category, expense tests green |
-| **Frontend Next.js App** | ✅ **13/13 Pages Built** | `npm run build` compiled clean with ProtectedRoute, Login, Register, Reset pages |
+| **Backend REST API** | ✅ **14/14 Tests Passed** | Pytest auth, isolation, email, AI categorization, NLP, insights, budget, category, expense tests all green |
+| **Frontend Next.js App** | ✅ **13/13 Pages Built** | `npm run build` compiled clean with AI Insights Widget and Smart Quick-Add Form Modal |
 
 ---
 
-## ✅ Accomplishments in Latest Session (September 2, 2026):
+## ✅ Accomplishments in Latest Session (September 3, 2026):
 
-1. **Pluggable Email Service Integration**:
-   - Built [`EmailService`](file:///d:/Fintrack/backend/app/services/email_service.py) supporting `smtp`, `resend`, and `console` modes via `settings.EMAIL_PROVIDER`.
-   - Added async local SMTP delivery using `aiosmtplib` for local development.
-   - Installed `resend` Python SDK for future production deployment.
+1. **PRD & SRS Specifications Updated**:
+   - Added Section 4.1.10 in [`Docs/ExpenseTracker_PRD_Merged.md`](file:///d:/Fintrack/Docs/ExpenseTracker_PRD_Merged.md) for AI Recommendations & Smart Insights.
+   - Added Section 3.9 in [`Docs/FinTrack_SRS.md`](file:///d:/Fintrack/Docs/FinTrack_SRS.md) specifying `FR-AI-1` through `FR-AI-5`.
 
-2. **Responsive HTML Email Template**:
-   - Created [`password_reset.html`](file:///d:/Fintrack/backend/app/templates/email/password_reset.html) styled with FinTrack brand colors, CTA reset button, and expiry notices.
+2. **Pluggable Multi-Provider AI Architecture**:
+   - Created [`BaseAIProvider`](file:///d:/Fintrack/backend/app/services/ai/base.py) abstract interface.
+   - Built [`GeminiProvider`](file:///d:/Fintrack/backend/app/services/ai/gemini_provider.py) (`gemini-1.5-flash` default).
+   - Built [`OpenAIProvider`](file:///d:/Fintrack/backend/app/services/ai/openai_provider.py) (`gpt-4o-mini` / `gpt-4o` ready).
+   - Built [`RuleBasedProvider`](file:///d:/Fintrack/backend/app/services/ai/rule_based_provider.py) for deterministic offline and zero-key fallback.
+   - Orchestrated via [`AIService`](file:///d:/Fintrack/backend/app/services/ai/ai_service.py) with real PostgreSQL spending aggregates.
 
-3. **AuthService Integration**:
-   - Updated [`AuthService.forgot_password`](file:///d:/Fintrack/backend/app/services/auth_service.py) to trigger asynchronous email dispatch when password reset is requested.
+3. **Backend REST AI Endpoints**:
+   - `POST /api/v1/ai/categorize` — Predicts matching category from expense title.
+   - `GET /api/v1/ai/insights` — Derives live savings tips, budget health, and anomaly warnings.
+   - `POST /api/v1/ai/parse-expense` — Converts natural language sentence to structured expense fields.
 
-4. **Environment Configuration**:
-   - Updated [`backend/.env.example`](file:///d:/Fintrack/backend/.env.example), [`backend/.env`](file:///d:/Fintrack/backend/.env), and [`config.py`](file:///d:/Fintrack/backend/app/core/config.py) with SMTP settings (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_TLS`).
+4. **100% Environment-Driven Configuration**:
+   - Documented `AI_PROVIDER`, `GEMINI_API_KEY`, `GEMINI_MODEL`, `OPENAI_API_KEY`, and `OPENAI_MODEL` in [`backend/.env.example`](file:///d:/Fintrack/backend/.env.example) with zero live `.env` tampering.
 
-5. **Automated Verification**:
-   - **Pytest**: 10/10 tests passed cleanly.
+5. **Frontend AI UI Components**:
+   - Built [`AIInsightsWidget.tsx`](file:///d:/Fintrack/frontend/src/components/ai/AIInsightsWidget.tsx) and embedded in Dashboard ([`page.tsx`](file:///d:/Fintrack/frontend/src/app/page.tsx)).
+   - Integrated AI Smart Quick-Add bar & Auto-Suggest Category chip in [`ExpenseFormModal.tsx`](file:///d:/Fintrack/frontend/src/components/expenses/ExpenseFormModal.tsx).
+
+6. **Automated Verification**:
+   - **Pytest**: 14/14 tests passed cleanly in `pytest tests/ -v`.
+   - **Next.js Production Build**: 13/13 static pages compiled with zero errors (`npm run build`).
+
 
 
 1. **Google OAuth 2.0 Clock Skew Resolution**:

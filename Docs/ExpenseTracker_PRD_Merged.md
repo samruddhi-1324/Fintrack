@@ -107,7 +107,14 @@ Everything else (login, multi-device sync, recurring expenses, notifications, mu
    - Password strength enforcement (min 8 chars, uppercase, lowercase, number, special char)
    - Auth Rate Limiting to prevent brute-force login and reset attempts
    - Empty, loading, error, and unauthenticated/unauthorized states for all screens
-9. **Data Export**
+9. **AI Recommendations & Smart Insights (Pluggable Provider Architecture)**
+    - Real-Time Smart Auto-Categorization: Instant category suggestions based on expense titles
+    - AI Spending Insights & Savings Recommendations: Actionable advice generated from real user spending trends
+    - Intelligent Budget Recommendations: Data-driven monthly budget caps based on historical averages
+    - Natural Language "Smart Quick Add": Single-sentence expense parsing (Title, Amount, Payment Mode, Category)
+    - Pluggable Multi-Provider Support: Google Gemini (default), OpenAI / ChatGPT ready, with deterministic offline rule-based fallback
+    - 100% Environment-Driven & Secure: Zero hardcoded keys, real user data isolation, and privacy-preserving sanitized prompts
+10. **Data Export**
    - CSV/PDF/Excel export of user-isolated filtered or full expense data
 
 ### 4.2 Post-MVP / Phase 2+ Candidates
@@ -115,14 +122,13 @@ Everything else (login, multi-device sync, recurring expenses, notifications, mu
 - Income tracking
 - Recurring/auto-scheduled expenses (rent, subscriptions, EMI)
 - Receipt photo capture with OCR-assisted amount/merchant extraction
-- Bank/card/UPI/SMS auto-import via a secure aggregator, with auto-categorization and manual override
+- Bank/card/UPI/SMS auto-import via a secure aggregator
 - Multiple wallets/accounts (cash, bank, card)
 - Multi-currency support for users who spend/travel across currencies
 - Notifications: budget threshold alerts, weekly/monthly summary digest
 - Shared household budgets with multi-user permissions (RBAC)
 - Goal-based savings tracking
 - Split expenses (roommates/friends)
-- AI-based spend prediction and auto-categorization
 - Calendar heatmap of spend, year-view trends
 - Biometric/PIN app-lock, cloud backup, custom themes/dark mode
 - Premium tier: advanced analytics, unlimited bank connections, tax-category tagging

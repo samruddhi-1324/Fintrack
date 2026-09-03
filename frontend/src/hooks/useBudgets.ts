@@ -26,6 +26,8 @@ export function useBudgets(category_id?: string) {
       queryClient.invalidateQueries({ queryKey: ['budget-status'] });
       queryClient.invalidateQueries({ queryKey: ['daily-status'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['ai-insights'] });
+      queryClient.invalidateQueries({ queryKey: ['ai-forecast'] });
     }
   });
 
@@ -36,6 +38,8 @@ export function useBudgets(category_id?: string) {
       queryClient.invalidateQueries({ queryKey: ['budget-status'] });
       queryClient.invalidateQueries({ queryKey: ['daily-status'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['ai-insights'] });
+      queryClient.invalidateQueries({ queryKey: ['ai-forecast'] });
     }
   });
 
