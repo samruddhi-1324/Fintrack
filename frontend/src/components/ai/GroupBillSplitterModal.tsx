@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Modal from '../ui/Modal';
+import Button from '../ui/Button';
 import { aiApi } from '../../services/aiApi';
-import { GroupBillSplitResponse, GroupBillParticipantShare, DebtSettlementItem } from '../../types/ai';
+import { GroupBillSplitResponse } from '../../types/ai';
 
 interface GroupBillSplitterModalProps {
   isOpen: boolean;
@@ -50,7 +52,7 @@ export const GroupBillSplitterModal: React.FC<GroupBillSplitterModalProps> = ({
   };
 
   const handleRemoveParticipant = (nameToRemove: string) => {
-    if (participants.length <= 2) return; // Keep at least 2
+    if (participants.length <= 2) return;
     setParticipants(participants.filter(p => p !== nameToRemove));
     if (payerName === nameToRemove) {
       setPayerName('You');
@@ -116,335 +118,396 @@ export const GroupBillSplitterModal: React.FC<GroupBillSplitterModalProps> = ({
   };
 
   return (
-    <div
-      style={{ zIndex: 99999 }}
-      className="fixed inset-0 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn"
-    >
-
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden max-h-[90vh] flex flex-col">
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-950/50">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">👥</span>
-            <div>
-              <h2 className="text-lg font-bold text-white">AI Group Bill & Debt Splitter</h2>
-              <p className="text-xs text-slate-400">Split restaurant bills, trip expenses & debts zero-drift</p>
+    <Modal isOpen={isOpen} onClose={onClose} title="👥 AI Group Bill & Debt Splitter">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        {/* Banner Header */}
+        <div
+          style={{
+            padding: '0.875rem 1rem',
+            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(16, 185, 129, 0.15) 100%)',
+            border: '1px solid rgba(16, 185, 129, 0.3)',
+            borderRadius: 'var(--radius-lg)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem'
+          }}
+        >
+          <span style={{ fontSize: '1.5rem' }}>👥</span>
+          <div>
+            <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+              Group Receipt & Debt Matrix Calculator
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+              Split dinner bills, trip expenses & group debts with zero-drift paise precision.
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
-          >
-            ✕
-          </button>
         </div>
 
-        {/* Body Container */}
-        <div className="p-6 overflow-y-auto space-y-6 flex-1">
-          {error && (
-            <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-300 text-xs flex items-center justify-between">
-              <span>🚨 {error}</span>
-              <button onClick={() => setError(null)} className="text-rose-400 hover:text-white">✕</button>
-            </div>
-          )}
+        {error && (
+          <div
+            style={{
+              padding: '0.75rem 1rem',
+              backgroundColor: 'rgba(239, 68, 68, 0.15)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              borderRadius: 'var(--radius-md)',
+              color: 'var(--accent-danger)',
+              fontSize: '0.825rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}
+          >
+            <span>🚨 {error}</span>
+            <button onClick={() => setError(null)} style={{ background: 'none', border: 'none', color: 'var(--accent-danger)', cursor: 'pointer', fontWeight: 'bold' }}>✕</button>
+          </div>
+        )}
 
-          {/* Form Inputs */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Bill Title / Description <span className="text-indigo-400">*</span>
-              </label>
+        {/* Inputs Grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+          <div>
+            <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Bill Title / Description <span style={{ color: 'var(--accent-primary)' }}>*</span>
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Olive Bistro Dinner"
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              style={{
+                width: '100%',
+                fontSize: '0.9rem',
+                fontWeight: 600,
+                color: 'var(--text-primary)',
+                marginTop: '0.25rem',
+                backgroundColor: 'var(--bg-card)',
+                border: '1px solid var(--border-color)',
+                borderRadius: 'var(--radius-md)',
+                padding: '0.5rem 0.75rem'
+              }}
+            />
+          </div>
+
+          <div>
+            <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Total Bill Amount (₹) <span style={{ color: 'var(--accent-primary)' }}>*</span>
+            </label>
+            <input
+              type="number"
+              placeholder="e.g. 1500"
+              value={totalAmount}
+              onChange={e => setTotalAmount(e.target.value)}
+              style={{
+                width: '100%',
+                fontSize: '0.95rem',
+                fontWeight: 700,
+                color: 'var(--accent-success)',
+                marginTop: '0.25rem',
+                backgroundColor: 'var(--bg-card)',
+                border: '1px solid var(--border-color)',
+                borderRadius: 'var(--radius-md)',
+                padding: '0.5rem 0.75rem'
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Payer & Members */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Who Paid Upfront? <span style={{ color: 'var(--accent-primary)' }}>*</span>
+            </label>
+            <select
+              value={payerName}
+              onChange={e => setPayerName(e.target.value)}
+              style={{
+                padding: '0.35rem 0.75rem',
+                backgroundColor: 'var(--bg-card)',
+                border: '1px solid var(--border-color)',
+                borderRadius: 'var(--radius-md)',
+                color: 'var(--text-primary)',
+                fontSize: '0.85rem',
+                fontWeight: 600
+              }}
+            >
+              {participants.map(p => (
+                <option key={p} value={p}>
+                  {p} {p === 'You' ? '(You)' : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Group Member Chips */}
+          <div>
+            <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem', display: 'block' }}>
+              Group Members ({participants.length})
+            </label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.5rem', padding: '0.625rem', backgroundColor: 'rgba(15, 23, 42, 0.6)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+              {participants.map(p => (
+                <span
+                  key={p}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    padding: '0.25rem 0.65rem',
+                    borderRadius: '9999px',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    backgroundColor: p === payerName ? 'rgba(99, 102, 241, 0.2)' : 'var(--bg-card)',
+                    color: p === payerName ? 'var(--accent-primary)' : 'var(--text-primary)',
+                    border: p === payerName ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid var(--border-color)'
+                  }}
+                >
+                  <span>{p}</span>
+                  {p === payerName && <span style={{ fontSize: '0.7rem' }}>💳</span>}
+                  {participants.length > 2 && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveParticipant(p)}
+                      style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontWeight: 'bold', marginLeft: '0.15rem' }}
+                      title="Remove participant"
+                    >
+                      ×
+                    </button>
+                  )}
+                </span>
+              ))}
+            </div>
+
+            {/* Add friend input */}
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
               <input
                 type="text"
-                placeholder="e.g. Olive Bistro Dinner, Villa Rent"
-                value={title}
-                onChange={e => setTitle(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-800/80 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500"
+                placeholder="Add friend name (e.g. Rahul)"
+                value={participantInput}
+                onChange={e => setParticipantInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleAddParticipant())}
+                style={{
+                  flex: 1,
+                  padding: '0.45rem 0.65rem',
+                  backgroundColor: 'var(--bg-card)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: 'var(--radius-md)',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.8rem'
+                }}
               />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Total Bill Amount (₹) <span className="text-indigo-400">*</span>
-              </label>
-              <input
-                type="number"
-                placeholder="e.g. 1500"
-                value={totalAmount}
-                onChange={e => setTotalAmount(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-800/80 border border-slate-700 rounded-xl text-white text-sm font-semibold focus:outline-none focus:border-indigo-500"
-              />
+              <Button type="button" size="sm" variant="secondary" onClick={handleAddParticipant}>
+                + Add Member
+              </Button>
             </div>
           </div>
+        </div>
 
-          {/* Payer & Participants */}
-          <div className="space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <label className="text-xs font-semibold text-slate-300">
-                Who Paid Upfront? <span className="text-indigo-400">*</span>
-              </label>
-              <select
-                value={payerName}
-                onChange={e => setPayerName(e.target.value)}
-                className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white text-xs focus:outline-none focus:border-indigo-500"
-              >
-                {participants.map(p => (
-                  <option key={p} value={p}>
-                    {p} {p === 'You' ? '(You)' : ''}
-                  </option>
-                ))}
-              </select>
+        {/* Split Mode Selector */}
+        <div>
+          <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem', display: 'block' }}>
+            Select Split Method
+          </label>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
+            <button
+              type="button"
+              onClick={() => setSplitMode('equal')}
+              style={{
+                padding: '0.5rem',
+                borderRadius: 'var(--radius-md)',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                border: splitMode === 'equal' ? '1px solid var(--accent-primary)' : '1px solid var(--border-color)',
+                backgroundColor: splitMode === 'equal' ? 'rgba(99, 102, 241, 0.2)' : 'var(--bg-card)',
+                color: splitMode === 'equal' ? 'var(--accent-primary)' : 'var(--text-secondary)'
+              }}
+            >
+              ⚖️ Equal
+            </button>
+            <button
+              type="button"
+              onClick={() => setSplitMode('percentage')}
+              style={{
+                padding: '0.5rem',
+                borderRadius: 'var(--radius-md)',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                border: splitMode === 'percentage' ? '1px solid var(--accent-primary)' : '1px solid var(--border-color)',
+                backgroundColor: splitMode === 'percentage' ? 'rgba(99, 102, 241, 0.2)' : 'var(--bg-card)',
+                color: splitMode === 'percentage' ? 'var(--accent-primary)' : 'var(--text-secondary)'
+              }}
+            >
+              % Percentage
+            </button>
+            <button
+              type="button"
+              onClick={() => setSplitMode('custom')}
+              style={{
+                padding: '0.5rem',
+                borderRadius: 'var(--radius-md)',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                border: splitMode === 'custom' ? '1px solid var(--accent-primary)' : '1px solid var(--border-color)',
+                backgroundColor: splitMode === 'custom' ? 'rgba(99, 102, 241, 0.2)' : 'var(--bg-card)',
+                color: splitMode === 'custom' ? 'var(--accent-primary)' : 'var(--text-secondary)'
+              }}
+            >
+              💰 Custom
+            </button>
+          </div>
+        </div>
+
+        {/* Custom shares input if not equal */}
+        {splitMode !== 'equal' && (
+          <div style={{ padding: '0.75rem', backgroundColor: 'rgba(15, 23, 42, 0.6)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+              {splitMode === 'percentage' ? 'Enter percentage (%) for each member:' : 'Enter rupee amount (₹) for each member:'}
             </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.5rem' }}>
+              {participants.map(p => (
+                <div key={p} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', backgroundColor: 'var(--bg-card)', padding: '0.4rem 0.65rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-primary)', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p}</span>
+                  <input
+                    type="number"
+                    placeholder={splitMode === 'percentage' ? '%' : '₹'}
+                    value={customShares[p] !== undefined ? customShares[p] : ''}
+                    onChange={e => handleCustomShareChange(p, e.target.value)}
+                    style={{
+                      width: '70px',
+                      padding: '0.2rem 0.4rem',
+                      backgroundColor: 'var(--bg-secondary)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: 'var(--radius-sm)',
+                      textAlign: 'right',
+                      fontSize: '0.78rem',
+                      color: 'var(--text-primary)'
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
-            {/* Group Members Chips */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                Group Members ({participants.length})
-              </label>
-              <div className="flex flex-wrap items-center gap-2 mb-2 p-2.5 bg-slate-950/60 rounded-xl border border-slate-800">
-                {participants.map(p => (
-                  <span
-                    key={p}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
-                      p === payerName
-                        ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40'
-                        : 'bg-slate-800 text-slate-200 border border-slate-700'
-                    }`}
-                  >
-                    <span>{p}</span>
-                    {p === payerName && <span className="text-[10px] text-indigo-400">💳</span>}
-                    {participants.length > 2 && (
-                      <button
-                        onClick={() => handleRemoveParticipant(p)}
-                        className="hover:text-rose-400 text-slate-400 ml-0.5 text-xs font-bold"
-                        title="Remove participant"
-                      >
-                        ×
-                      </button>
-                    )}
-                  </span>
-                ))}
+        {/* Action Button */}
+        <Button type="button" onClick={handleCalculateSplit} isLoading={loading} style={{ width: '100%', marginTop: '0.5rem' }}>
+          ⚡ Calculate Debt Split
+        </Button>
+
+        {/* Calculated Results */}
+        {result && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
+            {/* Header info */}
+            <div style={{ padding: '0.75rem', backgroundColor: 'rgba(99, 102, 241, 0.1)', border: '1px solid rgba(99, 102, 241, 0.3)', borderRadius: 'var(--radius-md)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>{result.title}</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Paid by {result.payer_name} • {result.split_mode.toUpperCase()} split</div>
               </div>
-
-              {/* Add member input */}
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Add friend name (e.g. Amit)"
-                  value={participantInput}
-                  onChange={e => setParticipantInput(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleAddParticipant())}
-                  className="flex-1 px-3 py-1.5 bg-slate-800/80 border border-slate-700 rounded-lg text-white text-xs focus:outline-none focus:border-indigo-500"
-                />
-                <button
-                  type="button"
-                  onClick={handleAddParticipant}
-                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white rounded-lg text-xs font-medium transition-colors"
-                >
-                  + Add
-                </button>
+              <div style={{ textAlign: 'right' }}>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Total Bill</span>
+                <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--accent-primary)' }}>₹{result.total_amount.toLocaleString('en-IN')}</div>
               </div>
             </div>
-          </div>
 
-          {/* Split Mode Selector */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-2">
-              Select Split Method
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => setSplitMode('equal')}
-                className={`py-2 px-3 rounded-xl border text-xs font-semibold transition-all ${
-                  splitMode === 'equal'
-                    ? 'bg-indigo-600/30 border-indigo-500 text-indigo-200 shadow-lg shadow-indigo-500/10'
-                    : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                ⚖️ Equal Split
-              </button>
-              <button
-                type="button"
-                onClick={() => setSplitMode('percentage')}
-                className={`py-2 px-3 rounded-xl border text-xs font-semibold transition-all ${
-                  splitMode === 'percentage'
-                    ? 'bg-indigo-600/30 border-indigo-500 text-indigo-200 shadow-lg shadow-indigo-500/10'
-                    : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                % Percentage
-              </button>
-              <button
-                type="button"
-                onClick={() => setSplitMode('custom')}
-                className={`py-2 px-3 rounded-xl border text-xs font-semibold transition-all ${
-                  splitMode === 'custom'
-                    ? 'bg-indigo-600/30 border-indigo-500 text-indigo-200 shadow-lg shadow-indigo-500/10'
-                    : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                💰 Custom Amount
-              </button>
-            </div>
-          </div>
-
-          {/* Custom Shares Inputs if not equal */}
-          {splitMode !== 'equal' && (
-            <div className="p-3 bg-slate-950/60 rounded-xl border border-slate-800 space-y-2">
-              <p className="text-xs font-medium text-slate-400">
-                {splitMode === 'percentage'
-                  ? 'Enter percentage (%) for each member:'
-                  : 'Enter rupee amount (₹) for each member:'}
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {participants.map(p => (
-                  <div key={p} className="flex items-center justify-between gap-2 bg-slate-900/80 p-2 rounded-lg border border-slate-800">
-                    <span className="text-xs text-slate-200 truncate">{p}</span>
-                    <div className="flex items-center gap-1">
-                      <input
-                        type="number"
-                        placeholder={splitMode === 'percentage' ? '%' : '₹'}
-                        value={customShares[p] !== undefined ? customShares[p] : ''}
-                        onChange={e => handleCustomShareChange(p, e.target.value)}
-                        className="w-20 px-2 py-1 bg-slate-800 border border-slate-700 rounded text-right text-xs text-white focus:outline-none focus:border-indigo-500"
-                      />
-                      <span className="text-xs text-slate-400 font-bold">
-                        {splitMode === 'percentage' ? '%' : '₹'}
-                      </span>
+            {/* Individual Breakdown */}
+            <div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+                📊 Individual Shares Breakdown
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.5rem' }}>
+                {result.participants.map(p => (
+                  <div key={p.name} style={{ padding: '0.5rem 0.75rem', backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)' }}>{p.name} {p.is_payer ? '💳' : ''}</div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{p.share_percentage}% of total</div>
+                    </div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                      ₹{p.share_amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </div>
                   </div>
                 ))}
               </div>
             </div>
-          )}
 
-          {/* Action Trigger */}
-          <button
-            type="button"
-            onClick={handleCalculateSplit}
-            disabled={loading}
-            className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 text-white font-semibold text-sm rounded-xl shadow-lg shadow-indigo-500/20 transition-all flex items-center justify-center gap-2"
-          >
-            {loading ? (
-              <>
-                <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span>Calculating Debt Matrix...</span>
-              </>
-            ) : (
-              <>
-                <span>⚡ Calculate Debt Split</span>
-              </>
-            )}
-          </button>
-
-          {/* Results Display */}
-          {result && (
-            <div className="mt-6 pt-6 border-t border-slate-800 space-y-5 animate-fadeIn">
-              {/* Header result info */}
-              <div className="flex items-center justify-between p-3 bg-indigo-950/40 border border-indigo-500/30 rounded-xl">
-                <div>
-                  <h3 className="text-sm font-bold text-white">{result.title}</h3>
-                  <p className="text-xs text-indigo-300">
-                    Paid by <span className="font-semibold text-white">{result.payer_name}</span> • Mode: {result.split_mode.toUpperCase()}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <span className="text-xs text-slate-400">Total</span>
-                  <p className="text-lg font-bold text-indigo-400">₹{result.total_amount.toLocaleString('en-IN')}</p>
-                </div>
+            {/* Debt Settlement Matrix */}
+            <div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+                💸 Debt Settlement Matrix
               </div>
-
-              {/* Participant Shares */}
-              <div>
-                <h4 className="text-xs font-semibold text-slate-300 mb-2">📊 Individual Shares Breakdown</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {result.participants.map(p => (
-                    <div key={p.name} className="p-3 bg-slate-950/70 border border-slate-800 rounded-xl flex justify-between items-center">
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-bold text-white">{p.name}</span>
-                          {p.is_payer && (
-                            <span className="px-1.5 py-0.5 bg-indigo-500/20 text-indigo-300 text-[10px] rounded border border-indigo-500/30">
-                              💳 Payer
-                            </span>
-                          )}
-                        </div>
-                        <span className="text-[10px] text-slate-400">{p.share_percentage}% of total</span>
-                      </div>
-                      <span className="text-sm font-bold text-slate-200">
-                        ₹{p.share_amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                      </span>
+              {result.settlement_transfers.length === 0 ? (
+                <div style={{ padding: '0.5rem 0.75rem', backgroundColor: 'rgba(16, 185, 129, 0.15)', color: 'var(--accent-success)', borderRadius: 'var(--radius-md)', fontSize: '0.8rem' }}>
+                  ✅ No debts owed! Everyone has settled their equal share.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  {result.settlement_transfers.map((s, idx) => (
+                    <div key={idx} style={{ padding: '0.5rem 0.75rem', backgroundColor: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.3)', color: '#f59e0b', borderRadius: 'var(--radius-md)', fontSize: '0.8rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span>{s.message}</span>
+                      <span style={{ fontWeight: 700 }}>₹{s.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                     </div>
                   ))}
                 </div>
-              </div>
-
-              {/* Settlement Instructions */}
-              <div>
-                <h4 className="text-xs font-semibold text-slate-300 mb-2">💸 Debt Settlement Matrix</h4>
-                {result.settlement_transfers.length === 0 ? (
-                  <p className="text-xs text-emerald-400 p-2.5 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
-                    ✅ No debts owed! Everyone has settled their equal share.
-                  </p>
-                ) : (
-                  <div className="space-y-1.5">
-                    {result.settlement_transfers.map((s, idx) => (
-                      <div key={idx} className="p-2.5 bg-amber-500/10 border border-amber-500/25 rounded-xl flex items-center justify-between text-xs text-amber-200">
-                        <span>{s.message}</span>
-                        <span className="font-bold text-amber-400">
-                          ₹{s.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* WhatsApp Summary & Copy */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <h4 className="text-xs font-semibold text-slate-300">📲 WhatsApp Shareable Summary</h4>
-                  <button
-                    onClick={handleCopyWhatsApp}
-                    className="text-xs px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 transition-colors flex items-center gap-1"
-                  >
-                    {copied ? '✅ Copied!' : '📋 Copy Text'}
-                  </button>
-                </div>
-                <textarea
-                  readOnly
-                  rows={6}
-                  value={result.whatsapp_summary}
-                  className="w-full p-3 bg-slate-950 font-mono text-xs text-emerald-400 border border-slate-800 rounded-xl focus:outline-none resize-none"
-                />
-              </div>
-
-              {/* 1-Click Expense Logging Footer */}
-              {onLogPersonalShare && (
-                <div className="p-4 bg-gradient-to-r from-slate-900 to-indigo-950/60 border border-indigo-500/30 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3">
-                  <div>
-                    <span className="text-xs text-slate-400">Your Share ({result.payer_name === 'You' ? 'You' : 'Calculated'})</span>
-                    <p className="text-base font-bold text-emerald-400">
-                      ₹{result.user_personal_share.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleFillExpenseModal}
-                    className="w-full sm:w-auto px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2"
-                  >
-                    <span>✨ Log My Share as FinTrack Expense</span>
-                  </button>
-                </div>
               )}
             </div>
-          )}
-        </div>
+
+            {/* WhatsApp Shareable Text */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
+                  📲 WhatsApp Shareable Summary
+                </span>
+                <button
+                  type="button"
+                  onClick={handleCopyWhatsApp}
+                  style={{
+                    padding: '0.2rem 0.5rem',
+                    backgroundColor: 'var(--bg-card)',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: 'var(--radius-sm)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {copied ? '✅ Copied!' : '📋 Copy Text'}
+                </button>
+              </div>
+              <textarea
+                readOnly
+                rows={6}
+                value={result.whatsapp_summary}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  backgroundColor: 'rgba(15, 23, 42, 0.8)',
+                  color: 'var(--accent-success)',
+                  fontFamily: 'monospace',
+                  fontSize: '0.78rem',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: 'var(--radius-md)',
+                  resize: 'none'
+                }}
+              />
+            </div>
+
+            {/* Log My Share Footer */}
+            {onLogPersonalShare && (
+              <div style={{ padding: '0.875rem 1rem', backgroundColor: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: 'var(--radius-lg)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+                <div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Your Share ({result.payer_name === 'You' ? 'You' : 'Calculated'})</span>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--accent-success)' }}>
+                    ₹{result.user_personal_share.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                  </div>
+                </div>
+                <Button type="button" onClick={handleFillExpenseModal}>
+                  ✨ Log My Share as FinTrack Expense
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
-    </div>
+    </Modal>
   );
 };
