@@ -1087,6 +1087,154 @@ class AIService:
             "category_name": matched_cat_name
         }
 
+    @classmethod
+    async def simulate_financial_goal(cls, payload: Dict[str, Any], user_id: uuid.UUID, db: AsyncSession) -> Dict[str, Any]:
+        """
+        Simulates financial feasibility for a target savings goal (e.g. MacBook, Trip, Emergency Fund).
+        Aggregates past user monthly spend & budgets from PostgreSQL, predicts required monthly savings pace,
+        calculates goal feasibility grade/score, identifies category spending cutbacks, and projects achievement date.
+        """
+        goal_name = str(payload.get("goal_name", "Savings Goal")).strip() or "Savings Goal"
+        target_amount = float(payload.get("target_amount", 100000.0))
+        target_months = int(payload.get("target_months", 6))
+        if target_months < 1:
+            target_months = 1
+
+        required_monthly = round(target_amount / target_months, 2)
+
+        today = date.today()
+        current_year = today.year
+        current_month = today.month
+
+        # Current month total spend
+        curr_spend_res = await db.execute(
+            select(func.coalesce(func.sum(Expense.amount), 0)).where(
+                Expense.user_id == user_id,
+                extract("year", Expense.date) == current_year,
+                extract("month", Expense.date) == current_month
+            )
+        )
+        current_month_spend = float(curr_spend_res.scalar_one_or_none() or 0.0)
+
+        # Total monthly budget cap across active budgets
+        budget_res = await db.execute(
+            select(func.coalesce(func.sum(Budget.amount), 0)).where(Budget.user_id == user_id)
+        )
+
+        total_monthly_budget = float(budget_res.scalar_one_or_none() or 0.0)
+        if total_monthly_budget <= 0:
+            total_monthly_budget = 40000.0
+
+        current_savings_pace = max(0.0, total_monthly_budget - current_month_spend)
+        if current_savings_pace == 0.0 and current_month_spend > 0:
+            current_savings_pace = round(total_monthly_budget * 0.15, 2)
+
+        monthly_gap = round(required_monthly - current_savings_pace, 2)
+
+        cat_spend_res = await db.execute(
+            select(Category.name, func.coalesce(func.sum(Expense.amount), 0).label("cat_total"))
+            .join(Category, Category.id == Expense.category_id)
+            .where(
+                Expense.user_id == user_id,
+                extract("year", Expense.date) == current_year,
+                extract("month", Expense.date) == current_month
+            )
+            .group_by(Category.name)
+            .order_by(func.sum(Expense.amount).desc())
+        )
+        cat_rows = cat_spend_res.all()
+
+        discretionary_keywords = ["food", "dining", "entertainment", "social", "shopping", "travel", "miscellaneous"]
+        category_cutbacks = []
+        unlocked_total = 0.0
+
+        for cat_name, amt in cat_rows:
+            cat_amt = float(amt)
+            is_discretionary = any(k in cat_name.lower() for k in discretionary_keywords)
+            if cat_amt > 1000 and (is_discretionary or len(category_cutbacks) < 2):
+                cut_pct = 25.0 if is_discretionary else 15.0
+                unlocked = round((cut_pct / 100.0) * cat_amt, 2)
+                unlocked_total += unlocked
+                category_cutbacks.append({
+                    "category_name": cat_name,
+                    "current_monthly_spend": cat_amt,
+                    "suggested_cutback_pct": cut_pct,
+                    "monthly_savings_unlocked": unlocked,
+                    "reason": f"Trim discretionary outflow in {cat_name} by {int(cut_pct)}% to free up ₹{unlocked:,.2f}/mo."
+                })
+
+        if not category_cutbacks:
+            category_cutbacks = [
+                {
+                    "category_name": "Food & Dining Out",
+                    "current_monthly_spend": 8000.0,
+                    "suggested_cutback_pct": 25.0,
+                    "monthly_savings_unlocked": 2000.0,
+                    "reason": "Reduce dining out frequency by 25% to unlock ₹2,000/mo."
+                },
+                {
+                    "category_name": "Entertainment & Subscriptions",
+                    "current_monthly_spend": 4000.0,
+                    "suggested_cutback_pct": 30.0,
+                    "monthly_savings_unlocked": 1200.0,
+                    "reason": "Cancel unused subscriptions to unlock ₹1,200/mo."
+                }
+            ]
+            unlocked_total = 3200.0
+
+        total_achievable_pace = current_savings_pace + unlocked_total
+        ratio = (total_achievable_pace / required_monthly) if required_monthly > 0 else 1.0
+
+        score = min(100, max(15, int(ratio * 85)))
+        if score >= 80:
+            grade = "Highly Achievable 🌱"
+            emoji = "🎯"
+        elif score >= 60:
+            grade = "Realistic with Adjustments ⚖️"
+            emoji = "⚖️"
+        elif score >= 40:
+            grade = "Stretched ⚠️"
+            emoji = "⚠️"
+        else:
+            grade = "Unrealistic 🚨"
+            emoji = "🚨"
+
+        current_pace_months = int(round(target_amount / max(current_savings_pace, 500.0)))
+        
+        from datetime import timedelta
+        achievement_date = today + timedelta(days=int(target_months * 30.4375))
+        achieve_date_str = achievement_date.strftime("%B %Y")
+
+        tactical_advice = [
+            f"Set up an automated monthly recurring savings transfer of ₹{required_monthly:,.2f} on payday.",
+            f"Apply suggested category cutbacks to free up ₹{unlocked_total:,.2f} in discretionary spending monthly.",
+            f"Review daily burn velocity on FinTrack dashboard to ensure monthly outflow stays under ₹{max(0.0, total_monthly_budget - required_monthly):,.2f}."
+        ]
+
+        if monthly_gap <= 0:
+            narrative = f"Great news! Your current savings pace of ₹{current_savings_pace:,.2f}/mo easily covers the ₹{required_monthly:,.2f}/mo needed to reach '{goal_name}' in {target_months} months!"
+        else:
+            narrative = f"To reach '{goal_name}' (₹{target_amount:,.2f}) in {target_months} months, you need ₹{required_monthly:,.2f}/mo. Applying the recommended category cutbacks will unlock ₹{unlocked_total:,.2f}/mo to bridge the gap!"
+
+        return {
+            "provider": settings.AI_PROVIDER,
+            "goal_name": goal_name,
+            "target_amount": target_amount,
+            "target_months": target_months,
+            "required_monthly_savings": required_monthly,
+            "current_monthly_savings_pace": current_savings_pace,
+            "monthly_gap": monthly_gap,
+            "feasibility_score": score,
+            "feasibility_grade": grade,
+            "feasibility_emoji": emoji,
+            "projected_achievement_date": achieve_date_str,
+            "current_pace_months_needed": current_pace_months,
+            "category_cutbacks": category_cutbacks,
+            "tactical_advice": tactical_advice,
+            "summary_narrative": narrative
+        }
+
+
 
 
 

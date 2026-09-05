@@ -18,9 +18,12 @@ from app.schemas.ai import (
     AICopilotResponse,
     AnomaliesResponse,
     GroupBillSplitRequest,
-    GroupBillSplitResponse
+    GroupBillSplitResponse,
+    GoalSimulationRequest,
+    GoalSimulationResponse
 )
 from app.services.ai.ai_service import AIService
+
 
 logger = logging.getLogger(__name__)
 
@@ -239,6 +242,27 @@ async def split_group_bill(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to calculate group bill split: {str(e)}"
         )
+
+@router.post("/simulate-goal", response_model=GoalSimulationResponse, summary="AI 'What-If' Financial Goal & Savings Simulator")
+async def simulate_financial_goal(
+    payload: GoalSimulationRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Simulates goal feasibility against authentic user spending history in PostgreSQL,
+    predicts required monthly savings pace, calculates category cutbacks, and estimates completion timeline.
+    """
+    try:
+        sim_result = await AIService.simulate_financial_goal(payload.model_dump(), current_user.id, db)
+        return GoalSimulationResponse(**sim_result)
+    except Exception as e:
+        logger.error(f"Error simulating financial goal: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to simulate financial goal: {str(e)}"
+        )
+
 
 
 

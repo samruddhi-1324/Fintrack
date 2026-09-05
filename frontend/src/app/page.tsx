@@ -11,8 +11,10 @@ import { AIInsightsWidget } from '../components/ai/AIInsightsWidget';
 import { AIForecastWidget } from '../components/ai/AIForecastWidget';
 import { FinancialHealthScoreWidget } from '../components/ai/FinancialHealthScoreWidget';
 import { AIAnomaliesWidget } from '../components/ai/AIAnomaliesWidget';
+import { AIGoalSimulatorWidget } from '../components/ai/AIGoalSimulatorWidget';
 import { ProtectedRoute } from '../components/auth/ProtectedRoute';
 import { useDashboard } from '../hooks/useDashboard';
+
 
 export default function DashboardPage() {
   const { summary, mom, isLoading, isError } = useDashboard();
@@ -41,6 +43,10 @@ export default function DashboardPage() {
 
             {/* AI Anomaly & Subscription Price-Hike Detector Widget */}
             <AIAnomaliesWidget />
+
+            {/* AI "What-If" Financial Goal & Savings Simulator Widget */}
+            <AIGoalSimulatorWidget />
+
 
             {/* Daily Spending Limit Widget */}
             <DailyLimitWidget dailyStatus={summary.daily_limit_status} />

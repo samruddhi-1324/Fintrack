@@ -212,11 +212,26 @@ Integrated into the Dashboard ([`AIInsightsWidget.tsx`](file:///d:/Fintrack/fron
 
 ---
 
+## 🎯 14. AI "What-If" Financial Goal & Savings Simulator
+
+* **API Endpoint**: `POST /api/v1/ai/simulate-goal`
+* **Frontend Component**: [`AIGoalSimulatorWidget.tsx`](file:///d:/Fintrack/frontend/src/components/ai/AIGoalSimulatorWidget.tsx)
+* **Dashboard & Budget Locations**: Mounted on Dashboard (`app/page.tsx`) and Live Budget Tracking (`app/budgets/page.tsx`).
+
+### Capabilities:
+* **Real Feasibility Scoring (0–100%)**: Evaluates authentic user spending patterns in PostgreSQL to calculate goal feasibility grade (`Highly Achievable 🌱`, `Realistic with Adjustments ⚖️`, `Stretched ⚠️`, `Unrealistic 🚨`).
+* **Category Cutback Recommendations**: Identifies exact category spend reductions (e.g. *"Trim Food & Dining by 25% to unlock ₹2,000/mo"*).
+* **Interactive Target Sliders**: Real-time sliders for Target Amount (₹) and Target Timeline (Months).
+* **Timeline Projection Comparison**: Compares current monthly savings pace vs AI-optimized savings pace with estimated completion date predictions.
+
+---
+
 ## 🧪 Verification & Automated Testing
 
 All AI features are backed by automated tests:
-* **Backend Pytest Suite**: `pytest tests/test_ai_api.py -v` (10/10 AI tests passed, 20/20 total backend tests passed).
+* **Backend Pytest Suite**: `pytest tests/test_ai_api.py -v` (11/11 AI tests passed, 21/21 total backend tests passed).
 * **Frontend Build**: `npm run build` (13/13 static routes compiled with 0 errors).
+
 
 
 

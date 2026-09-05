@@ -188,6 +188,38 @@ class GroupBillSplitResponse(BaseModel):
     category_id: Optional[str] = None
     category_name: str = "Group & Social"
 
+class CategoryCutbackRecommendation(BaseModel):
+    category_name: str
+    current_monthly_spend: float
+    suggested_cutback_pct: float
+    monthly_savings_unlocked: float
+    reason: str
+
+class GoalSimulationRequest(BaseModel):
+    goal_name: str = Field(..., min_length=1, max_length=150, description="Financial goal name e.g. Buy MacBook Pro")
+    target_amount: float = Field(..., gt=0, description="Total target amount in Rupees")
+    target_months: int = Field(default=6, ge=1, le=120, description="Timeline target in months")
+    proposed_monthly_savings: Optional[float] = Field(default=None, description="Optional custom monthly savings contribution")
+    custom_category_cuts: Dict[str, float] = Field(default={}, description="Optional category cut percentage overrides")
+
+class GoalSimulationResponse(BaseModel):
+    provider: str
+    goal_name: str
+    target_amount: float
+    target_months: int
+    required_monthly_savings: float
+    current_monthly_savings_pace: float
+    monthly_gap: float
+    feasibility_score: int
+    feasibility_grade: str
+    feasibility_emoji: str
+    projected_achievement_date: str
+    current_pace_months_needed: int
+    category_cutbacks: List[CategoryCutbackRecommendation]
+    tactical_advice: List[str]
+    summary_narrative: str
+
+
 
 
 

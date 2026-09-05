@@ -304,6 +304,39 @@ async def test_ai_split_group_bill(async_client: AsyncClient):
     assert "BILL SPLIT" in data["whatsapp_summary"]
 
 
+@pytest.mark.asyncio
+async def test_ai_simulate_financial_goal(async_client: AsyncClient):
+    """Test AI What-If Financial Goal & Savings Simulator endpoint."""
+    email = f"goal_user_{uuid.uuid4().hex[:6]}@example.com"
+    reg = await async_client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "password": "SecurePassword123!", "full_name": "Goal User"}
+    )
+    token = reg.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    payload = {
+        "goal_name": "Buy MacBook Pro M3",
+        "target_amount": 150000.0,
+        "target_months": 6
+    }
+
+    resp = await async_client.post("/api/v1/ai/simulate-goal", json=payload, headers=headers)
+    assert resp.status_code == 200
+    data = resp.json()
+
+    assert data["goal_name"] == "Buy MacBook Pro M3"
+    assert data["target_amount"] == 150000.0
+    assert data["target_months"] == 6
+    assert data["required_monthly_savings"] == 25000.0
+    assert "feasibility_score" in data
+    assert 0 <= data["feasibility_score"] <= 100
+    assert "feasibility_grade" in data
+    assert "category_cutbacks" in data
+    assert "tactical_advice" in data
+
+
+
 
 
 

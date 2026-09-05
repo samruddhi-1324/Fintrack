@@ -10,15 +10,24 @@ import {
   AICopilotResponse,
   AnomaliesResponse,
   GroupBillSplitRequest,
-  GroupBillSplitResponse
+  GroupBillSplitResponse,
+  GoalSimulationRequest,
+  GoalSimulationResponse
 } from '../types/ai';
 
 export const aiApi = {
+  simulateGoal: (data: GoalSimulationRequest) =>
+    fetchApi<GoalSimulationResponse>('/ai/simulate-goal', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }),
+
   splitGroupBill: (data: GroupBillSplitRequest) =>
     fetchApi<GroupBillSplitResponse>('/ai/split-bill', {
       method: 'POST',
       body: JSON.stringify(data)
     }),
+
 
   getAnomalies: () =>
     fetchApi<AnomaliesResponse>('/ai/anomalies', {

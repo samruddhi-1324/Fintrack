@@ -200,6 +200,41 @@ export interface GroupBillSplitResponse {
   category_name: string;
 }
 
+export interface CategoryCutbackRecommendation {
+  category_name: string;
+  current_monthly_spend: number;
+  suggested_cutback_pct: number;
+  monthly_savings_unlocked: number;
+  reason: string;
+}
+
+export interface GoalSimulationRequest {
+  goal_name: string;
+  target_amount: number;
+  target_months?: number;
+  proposed_monthly_savings?: number;
+  custom_category_cuts?: Record<string, number>;
+}
+
+export interface GoalSimulationResponse {
+  provider: string;
+  goal_name: string;
+  target_amount: number;
+  target_months: number;
+  required_monthly_savings: number;
+  current_monthly_savings_pace: number;
+  monthly_gap: number;
+  feasibility_score: number;
+  feasibility_grade: string;
+  feasibility_emoji: string;
+  projected_achievement_date: string;
+  current_pace_months_needed: number;
+  category_cutbacks: CategoryCutbackRecommendation[];
+  tactical_advice: string[];
+  summary_narrative: string;
+}
+
+
 
 
 

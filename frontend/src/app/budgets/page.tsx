@@ -14,6 +14,8 @@ import { useCategories } from '../../hooks/useCategories';
 import { aiApi } from '../../services/aiApi';
 import { formatCurrency } from '../../lib/formatters';
 import { Sparkles, Zap, ArrowRight } from 'lucide-react';
+import { AIGoalSimulatorWidget } from '../../components/ai/AIGoalSimulatorWidget';
+
 
 export default function BudgetsPage() {
   const { budgets, budgetStatus, dailyStatus, isLoading, isError, deleteBudget } = useBudgets();
@@ -70,7 +72,11 @@ export default function BudgetsPage() {
           </Button>
         </div>
 
+        {/* AI What-If Goal & Savings Simulator Widget */}
+        <AIGoalSimulatorWidget onApplyBudgets={() => setIsModalOpen(true)} />
+
         {/* AI Recommended Budget Targets */}
+
         {aiData && aiData.budget_recommendations && aiData.budget_recommendations.length > 0 && (
           <div
             style={{
