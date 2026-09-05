@@ -13,10 +13,16 @@ import {
   GroupBillSplitResponse,
   GoalSimulationRequest,
   GoalSimulationResponse,
-  SavingsChallengesResponse
+  SavingsChallengesResponse,
+  TaxAssistantResponse
 } from '../types/ai';
 
 export const aiApi = {
+  getTaxAssistant: () =>
+    fetchApi<TaxAssistantResponse>('/ai/tax-assistant', {
+      method: 'GET'
+    }),
+
   getSavingsChallenges: () =>
     fetchApi<SavingsChallengesResponse>('/ai/challenges', {
       method: 'GET'

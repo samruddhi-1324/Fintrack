@@ -22,7 +22,8 @@ from app.schemas.ai import (
     GoalSimulationRequest,
     GoalSimulationResponse,
     SavingsChallengesResponse,
-    ClaimChallengeRequest
+    ClaimChallengeRequest,
+    TaxAssistantResponse
 )
 from app.services.ai.ai_service import AIService
 
@@ -302,6 +303,26 @@ async def claim_savings_challenge(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to claim savings challenge: {str(e)}"
         )
+
+@router.get("/tax-assistant", response_model=TaxAssistantResponse, summary="Get AI Tax Deduction & GST Assistant (Indian Tax Context)")
+async def get_tax_assistant_summary(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Audits user transaction history under Indian Income Tax Act (80C, 80D, 80G, HRA, 24b)
+    and CGST Act (Input Tax Credit u/s 16), and compares Old vs New Tax Regimes (Section 115BAC).
+    """
+    try:
+        data = await AIService.get_tax_assistant_summary(current_user.id, db)
+        return TaxAssistantResponse(**data)
+    except Exception as e:
+        logger.error(f"Error generating AI tax assistant summary: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate AI tax assistant summary: {str(e)}"
+        )
+
 
 
 

@@ -375,6 +375,34 @@ async def test_ai_savings_challenges(async_client: AsyncClient):
     assert "points_awarded" in claim_data
 
 
+@pytest.mark.asyncio
+async def test_ai_tax_assistant(async_client: AsyncClient):
+    """Test AI Tax Deduction & GST Assistant (Indian Tax Context) endpoint."""
+    email = f"tax_user_{uuid.uuid4().hex[:6]}@example.com"
+    reg = await async_client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "password": "SecurePassword123!", "full_name": "Tax User"}
+    )
+    token = reg.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # Fetch tax assistant summary
+    resp = await async_client.get("/api/v1/ai/tax-assistant", headers=headers)
+    assert resp.status_code == 200
+    data = resp.json()
+
+    assert "financial_year" in data
+    assert "total_tax_deductions" in data
+    assert "regime_comparison" in data
+    assert "recommended_regime" in data["regime_comparison"]
+    assert "potential_tax_savings" in data["regime_comparison"]
+    assert "section_breakdown" in data
+    assert len(data["section_breakdown"]) >= 3
+    assert "gst_summary" in data
+    assert "eligible_itc_claimable" in data["gst_summary"]
+
+
+
 
 
 

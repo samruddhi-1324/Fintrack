@@ -12,6 +12,7 @@ import { useExpenses } from '../../hooks/useExpenses';
 import { fetchApi } from '../../services/api';
 import { Expense, ExpenseFilterParams } from '../../types/expense';
 import { GroupBillSplitterModal } from '../../components/ai/GroupBillSplitterModal';
+import { AITaxAssistantWidget } from '../../components/ai/AITaxAssistantWidget';
 
 
 export default function ExpensesPage() {
@@ -59,15 +60,18 @@ export default function ExpensesPage() {
             <Button variant="outline" onClick={() => setIsGroupSplitModalOpen(true)}>
               👥 Split Group Bill
             </Button>
-            <Button variant="outline" onClick={handleExportCSV}>
+            <Button variant="secondary" onClick={handleExportCSV}>
               📥 Export CSV
             </Button>
             <Button onClick={() => { setExpenseToEdit(null); setIsAddModalOpen(true); }}>
-              + Log Expense
+              + Add Expense
             </Button>
           </div>
 
         </div>
+
+        {/* AI Tax Deduction & GST Assistant (Indian Context) */}
+        <AITaxAssistantWidget />
 
         {/* Combined Search, Filter & Sort Controls */}
         <ExpenseFiltersBar

@@ -13,6 +13,7 @@ import { FinancialHealthScoreWidget } from '../components/ai/FinancialHealthScor
 import { AIAnomaliesWidget } from '../components/ai/AIAnomaliesWidget';
 import { AIGoalSimulatorWidget } from '../components/ai/AIGoalSimulatorWidget';
 import { AISavingsChallengesWidget } from '../components/ai/AISavingsChallengesWidget';
+import { AITaxAssistantWidget } from '../components/ai/AITaxAssistantWidget';
 import { ProtectedRoute } from '../components/auth/ProtectedRoute';
 import { useDashboard } from '../hooks/useDashboard';
 
@@ -44,6 +45,9 @@ export default function DashboardPage() {
 
             {/* AI Anomaly & Subscription Price-Hike Detector Widget */}
             <AIAnomaliesWidget />
+
+            {/* AI Tax Deduction & GST Assistant (Indian Context) */}
+            <AITaxAssistantWidget />
 
             {/* AI Personalized Gamified Savings Challenges Widget */}
             <AISavingsChallengesWidget />

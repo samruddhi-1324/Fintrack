@@ -248,6 +248,51 @@ class SavingsChallengesResponse(BaseModel):
 class ClaimChallengeRequest(BaseModel):
     challenge_id: str = Field(..., min_length=1, description="ID of challenge to claim/complete")
 
+class TaxDeductionItem(BaseModel):
+    section_code: str  # e.g. "80C", "80D", "HRA Section 10(13A)", "Section 24b", "80G"
+    section_name: str
+    claimed_amount: float
+    max_limit: float
+    eligible_amount: float
+    percentage_utilized: float
+    status_badge: str
+
+class GSTBreakdownItem(BaseModel):
+    total_business_expenses: float
+    estimated_gst_paid: float
+    eligible_itc_claimable: float
+    blocked_credit_17_5: float
+    gst_eligible_expenses_count: int
+
+class TaxRegimeComparison(BaseModel):
+    estimated_annual_income: float
+    old_regime_tax: float
+    new_regime_tax: float
+    recommended_regime: str  # "Old Tax Regime 📜" | "New Tax Regime ⚡"
+    potential_tax_savings: float
+    recommendation_reason: str
+
+class TaxDeductibleExpense(BaseModel):
+    id: str
+    title: str
+    amount: float
+    date: str
+    category_name: str
+    tax_section: str
+    gst_eligible: bool = False
+    estimated_gst_amount: float = 0.0
+
+class TaxAssistantResponse(BaseModel):
+    provider: str
+    financial_year: str
+    total_tax_deductions: float
+    regime_comparison: TaxRegimeComparison
+    section_breakdown: List[TaxDeductionItem]
+    gst_summary: GSTBreakdownItem
+    deductible_transactions: List[TaxDeductibleExpense]
+    summary_headline: str
+
+
 
 
 

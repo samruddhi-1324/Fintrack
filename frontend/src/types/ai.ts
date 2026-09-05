@@ -262,6 +262,56 @@ export interface SavingsChallengesResponse {
   summary_headline: string;
 }
 
+export interface TaxDeductionItem {
+  section_code: string;
+  section_name: string;
+  claimed_amount: number;
+  max_limit: number;
+  eligible_amount: number;
+  percentage_utilized: number;
+  status_badge: string;
+}
+
+export interface GSTBreakdownItem {
+  total_business_expenses: number;
+  estimated_gst_paid: number;
+  eligible_itc_claimable: number;
+  blocked_credit_17_5: number;
+  gst_eligible_expenses_count: number;
+}
+
+export interface TaxRegimeComparison {
+  estimated_annual_income: number;
+  old_regime_tax: number;
+  new_regime_tax: number;
+  recommended_regime: string;
+  potential_tax_savings: number;
+  recommendation_reason: string;
+}
+
+export interface TaxDeductibleExpense {
+  id: string;
+  title: string;
+  amount: number;
+  date: string;
+  category_name: string;
+  tax_section: string;
+  gst_eligible: boolean;
+  estimated_gst_amount: number;
+}
+
+export interface TaxAssistantResponse {
+  provider: string;
+  financial_year: string;
+  total_tax_deductions: number;
+  regime_comparison: TaxRegimeComparison;
+  section_breakdown: TaxDeductionItem[];
+  gst_summary: GSTBreakdownItem;
+  deductible_transactions: TaxDeductibleExpense[];
+  summary_headline: string;
+}
+
+
 
 
 

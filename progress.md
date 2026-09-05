@@ -3,7 +3,7 @@
 **Project Owner / Lead Developer:** Samruddhi  
 **Last Updated:** September 6, 2026  
 **Repository Branch:** `main`  
-**Current Milestone:** FinTrack AI Intelligence Suite Complete (Features 1–15 Built & Tested, Production Ready)
+**Current Milestone:** FinTrack AI Intelligence Suite Complete (Features 1–16 Built & Tested, Production Ready)
 
 ---
 
@@ -26,40 +26,41 @@
 | **AI Group Bill & Debt Splitter** | ✅ **Built & Tested** | Equal/Percentage/Custom bill debt calculator, settlement matrix, WhatsApp summary, 1-click expense pre-fill |
 | **AI What-If Goal Simulator** | ✅ **Built & Tested** | Dynamic goal target feasibility calculator, monthly pace predictor, category cutback recommendations, and timeline projection bars |
 | **AI Savings Challenges & Badges** | ✅ **Built & Tested** | Personalized micro-challenges tailored to PostgreSQL spending patterns, XP levels, savings streak tracking, and rewards |
+| **AI Tax Deduction & GST Assistant** | ✅ **Built & Tested** | Audits IT Act Sections (80C, 80D, 80G, HRA 10(13A), 24b) and CGST Act (Input Tax Credit), Old vs New Regime comparison |
 | **Complete Features Specs** | ✅ **Documented** | Detailed specification in [`FEATURES.md`](file:///d:/Fintrack/FEATURES.md) and [`AI_FEATURES.md`](file:///d:/Fintrack/AI_FEATURES.md) |
 | **Email Service** | ✅ **Complete & Pluggable** | Local SMTP (`aiosmtplib`), Production Resend API (`resend`), and Console fallback |
 | **Authentication System** | ✅ **Complete & Verified** | Email/Password, Google OAuth 2.0 (OIDC), JWT Access + HttpOnly Refresh Tokens |
 | **User Data Isolation** | ✅ **Enforced** | Every API endpoint derives `user_id` from JWT; SQL queries strictly filtered |
-| **Backend REST API Tests** | ✅ **22/22 Tests Passed** | Pytest auth, isolation, email, AI categorization, NLP, insights, forecast, health-score, OCR, copilot, anomalies, split-bill, goal simulator, savings challenges, budget, category, expense tests all green |
+| **Backend REST API Tests** | ✅ **23/23 Tests Passed** | Pytest auth, isolation, email, AI categorization, NLP, insights, forecast, health-score, OCR, copilot, anomalies, split-bill, goal simulator, savings challenges, tax assistant, budget, category, expense tests all green |
 | **Frontend Next.js App** | ✅ **13/13 Pages Built** | `cmd /c npm run build` compiled clean with 0 errors across all routes |
 
 ---
 
 ## 🌟 Comprehensive Accomplishments Log (September 6, 2026)
 
-### 1. AI Financial Intelligence Engine Suite (Features 1–15 Complete)
-
-#### Feature 14: AI "What-If" Financial Goal & Savings Simulator (`POST /api/v1/ai/simulate-goal`)
-* **Backend**: Added Pydantic models in [`schemas/ai.py`](file:///d:/Fintrack/backend/app/schemas/ai.py), implemented `AIService.simulate_financial_goal(...)` in [`ai_service.py`](file:///d:/Fintrack/backend/app/services/ai/ai_service.py), endpoint `POST /api/v1/ai/simulate-goal` in [`endpoints/ai.py`](file:///d:/Fintrack/backend/app/api/v1/endpoints/ai.py), and test `test_ai_simulate_financial_goal`.
-* **Frontend**: Built [`AIGoalSimulatorWidget.tsx`](file:///d:/Fintrack/frontend/src/components/ai/AIGoalSimulatorWidget.tsx) mounted on Budgets and Dashboard.
+### 1. AI Financial Intelligence Engine Suite (Features 1–16 Complete)
 
 #### Feature 15: AI Personalized Gamified Savings Challenges & Badges (`GET /api/v1/ai/challenges` & `POST /api/v1/ai/challenges/claim`)
+* **Backend**: Added Pydantic models in [`schemas/ai.py`](file:///d:/Fintrack/backend/app/schemas/ai.py), implemented `AIService.get_savings_challenges(...)` & `claim_savings_challenge(...)` in [`ai_service.py`](file:///d:/Fintrack/backend/app/services/ai/ai_service.py), endpoints in [`endpoints/ai.py`](file:///d:/Fintrack/backend/app/api/v1/endpoints/ai.py), and test `test_ai_savings_challenges`.
+* **Frontend**: Built [`AISavingsChallengesWidget.tsx`](file:///d:/Fintrack/frontend/src/components/ai/AISavingsChallengesWidget.tsx) mounted on Budgets and Dashboard.
+
+#### Feature 16: AI Tax Deduction & GST Assistant (Indian Context) (`GET /api/v1/ai/tax-assistant`)
 * **Backend**:
-  * Added `SavingsChallengeItem`, `SavingsChallengesResponse`, and `ClaimChallengeRequest` Pydantic models in [`schemas/ai.py`](file:///d:/Fintrack/backend/app/schemas/ai.py).
-  * Implemented `AIService.get_savings_challenges(...)` and `AIService.claim_savings_challenge(...)` in [`ai_service.py`](file:///d:/Fintrack/backend/app/services/ai/ai_service.py) auditing transaction history for discretionary spend patterns.
-  * Added REST endpoints `GET /api/v1/ai/challenges` and `POST /api/v1/ai/challenges/claim` in [`endpoints/ai.py`](file:///d:/Fintrack/backend/app/api/v1/endpoints/ai.py).
-  * Added automated unit test `test_ai_savings_challenges` in [`tests/test_ai_api.py`](file:///d:/Fintrack/backend/tests/test_ai_api.py).
+  * Added `TaxDeductionItem`, `GSTBreakdownItem`, `TaxRegimeComparison`, `TaxDeductibleExpense`, and `TaxAssistantResponse` Pydantic models in [`schemas/ai.py`](file:///d:/Fintrack/backend/app/schemas/ai.py).
+  * Implemented `AIService.get_tax_assistant_summary(...)` in [`ai_service.py`](file:///d:/Fintrack/backend/app/services/ai/ai_service.py) auditing PostgreSQL transactions for Income Tax Act (80C, 80D, 80G, HRA 10(13A), 24b) and CGST Act (Input Tax Credit u/s 16 vs Blocked Credit u/s 17(5)).
+  * Added REST endpoint `GET /api/v1/ai/tax-assistant` in [`endpoints/ai.py`](file:///d:/Fintrack/backend/app/api/v1/endpoints/ai.py).
+  * Added automated unit test `test_ai_tax_assistant` in [`tests/test_ai_api.py`](file:///d:/Fintrack/backend/tests/test_ai_api.py).
 * **Frontend**:
-  * Added TypeScript interfaces in [`types/ai.ts`](file:///d:/Fintrack/frontend/src/types/ai.ts) and API methods `getSavingsChallenges()` & `claimSavingsChallenge()` in [`services/aiApi.ts`](file:///d:/Fintrack/frontend/src/services/aiApi.ts).
-  * Built [`AISavingsChallengesWidget.tsx`](file:///d:/Fintrack/frontend/src/components/ai/AISavingsChallengesWidget.tsx) featuring XP Level badge header, savings streak tracker (`🔥 5-Day Streak`), unlocked savings trophy counter, filter tabs, progress bars, and 1-click **"Accept Challenge"** / **"Complete & Claim Reward"**.
-  * Mounted [`AISavingsChallengesWidget.tsx`](file:///d:/Fintrack/frontend/src/components/ai/AISavingsChallengesWidget.tsx) on both Budgets page (`app/budgets/page.tsx`) and Dashboard overview page (`app/page.tsx`).
+  * Added TypeScript interfaces in [`types/ai.ts`](file:///d:/Fintrack/frontend/src/types/ai.ts) and `getTaxAssistant()` API method in [`services/aiApi.ts`](file:///d:/Fintrack/frontend/src/services/aiApi.ts).
+  * Built [`AITaxAssistantWidget.tsx`](file:///d:/Fintrack/frontend/src/components/ai/AITaxAssistantWidget.tsx) featuring Old vs New Tax Regime recommendation banner (*"Save ₹18,500 under Old Regime"*), Section deduction progress bars (80C, 80D, HRA, 24b), GST Input Tax Credit (ITC) claimable balance box, and deductible expense transaction log table.
+  * Mounted [`AITaxAssistantWidget.tsx`](file:///d:/Fintrack/frontend/src/components/ai/AITaxAssistantWidget.tsx) on both Dashboard overview (`app/page.tsx`) and Expense Log page (`app/expenses/page.tsx`).
 
 ---
 
 ## 🧪 Automated Test Verification
 
-* **Backend Pytest Suite**: `22/22 passed` (12 tests in `test_ai_api.py` including `test_ai_savings_challenges` passed cleanly):
-  * `test_ai_api.py` (12 tests: Factory, Categorize, NLP Parser, Insights, Forecast, Health Score, Receipt OCR Scanner, Copilot, Anomalies, Split Group Bill, Simulate Financial Goal, Savings Challenges)
+* **Backend Pytest Suite**: `23/23 passed` (13 tests in `test_ai_api.py` including `test_ai_tax_assistant` passed cleanly):
+  * `test_ai_api.py` (13 tests: Factory, Categorize, NLP Parser, Insights, Forecast, Health Score, Receipt OCR Scanner, Copilot, Anomalies, Split Group Bill, Simulate Financial Goal, Savings Challenges, Tax Assistant)
   * `test_auth.py`
   * `test_budgets_api.py`
   * `test_categories_api.py`
@@ -94,7 +95,7 @@ cd d:\Fintrack\backend
 
 ## 🔖 Instructions for Next Session
 
-1. All code changes for Feature 15 have been fully implemented, integrated, and verified against Pytest unit tests and Next.js production compilation.
+1. All code changes for Feature 16 have been fully implemented, integrated, and verified against Pytest unit tests and Next.js production compilation.
 2. [`AI_FEATURES.md`](file:///d:/Fintrack/AI_FEATURES.md) and [`progress.md`](file:///d:/Fintrack/progress.md) contain complete specifications and memory logs.
-3. FinTrack is stable, fully tested, and ready for production deployment or further feature additions as requested by Samruddhi.
-rack is stable, fully tested, and ready for production deployment or further feature additions as requested by Samruddhi.
+3. FinTrack is 100% stable, fully tested, and ready for production deployment or further feature additions as requested by Samruddhi.
+
