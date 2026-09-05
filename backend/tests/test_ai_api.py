@@ -336,6 +336,46 @@ async def test_ai_simulate_financial_goal(async_client: AsyncClient):
     assert "tactical_advice" in data
 
 
+@pytest.mark.asyncio
+async def test_ai_savings_challenges(async_client: AsyncClient):
+    """Test AI Personalized Gamified Savings Challenges endpoints."""
+    email = f"chal_user_{uuid.uuid4().hex[:6]}@example.com"
+    reg = await async_client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "password": "SecurePassword123!", "full_name": "Challenge User"}
+    )
+    token = reg.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # 1. GET /api/v1/ai/challenges
+    chal_resp = await async_client.get("/api/v1/ai/challenges", headers=headers)
+    assert chal_resp.status_code == 200
+    data = chal_resp.json()
+
+    assert "total_points" in data
+    assert "current_streak_days" in data
+    assert "level_title" in data
+    assert "challenges" in data
+    assert len(data["challenges"]) >= 1
+
+    first_chal = data["challenges"][0]
+    assert "id" in first_chal
+    assert "title" in first_chal
+    assert "difficulty" in first_chal
+
+    # 2. POST /api/v1/ai/challenges/claim
+    claim_resp = await async_client.post(
+        "/api/v1/ai/challenges/claim",
+        json={"challenge_id": first_chal["id"]},
+        headers=headers
+    )
+    assert claim_resp.status_code == 200
+    claim_data = claim_resp.json()
+    assert claim_data["status"] == "completed"
+    assert "points_awarded" in claim_data
+
+
+
 
 
 

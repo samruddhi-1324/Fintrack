@@ -219,6 +219,36 @@ class GoalSimulationResponse(BaseModel):
     tactical_advice: List[str]
     summary_narrative: str
 
+class SavingsChallengeItem(BaseModel):
+    id: str
+    title: str
+    description: str
+    category_name: str
+    target_savings: float
+    duration_days: int
+    difficulty: str  # "Easy 🌱" | "Medium ⚡" | "Hard 🏆"
+    reward_points: int
+    badge_icon: str
+    status: str  # "available" | "active" | "completed"
+    progress_percentage: float = 0.0
+    current_spent: float = 0.0
+    allowed_max_spend: float = 0.0
+
+class SavingsChallengesResponse(BaseModel):
+    provider: str
+    total_points: int
+    current_streak_days: int
+    level_title: str
+    level_badge: str
+    total_savings_unlocked: float
+    active_challenges_count: int
+    challenges: List[SavingsChallengeItem]
+    summary_headline: str
+
+class ClaimChallengeRequest(BaseModel):
+    challenge_id: str = Field(..., min_length=1, description="ID of challenge to claim/complete")
+
+
 
 
 

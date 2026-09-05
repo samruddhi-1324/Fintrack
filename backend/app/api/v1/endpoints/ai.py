@@ -20,7 +20,9 @@ from app.schemas.ai import (
     GroupBillSplitRequest,
     GroupBillSplitResponse,
     GoalSimulationRequest,
-    GoalSimulationResponse
+    GoalSimulationResponse,
+    SavingsChallengesResponse,
+    ClaimChallengeRequest
 )
 from app.services.ai.ai_service import AIService
 
@@ -262,6 +264,45 @@ async def simulate_financial_goal(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to simulate financial goal: {str(e)}"
         )
+
+@router.get("/challenges", response_model=SavingsChallengesResponse, summary="Get AI personalized gamified savings challenges")
+async def get_savings_challenges(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Audits user transaction history in PostgreSQL to return active and available gamified savings challenges,
+    current savings streak, XP level, and total unlocked savings.
+    """
+    try:
+        data = await AIService.get_savings_challenges(current_user.id, db)
+        return SavingsChallengesResponse(**data)
+    except Exception as e:
+        logger.error(f"Error fetching savings challenges: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch savings challenges: {str(e)}"
+        )
+
+@router.post("/challenges/claim", summary="Claim or mark completed an AI savings challenge")
+async def claim_savings_challenge(
+    payload: ClaimChallengeRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Marks a savings challenge as completed, awards XP points, and updates savings streak.
+    """
+    try:
+        result = await AIService.claim_savings_challenge(current_user.id, payload.challenge_id, db)
+        return result
+    except Exception as e:
+        logger.error(f"Error claiming savings challenge: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to claim savings challenge: {str(e)}"
+        )
+
 
 
 

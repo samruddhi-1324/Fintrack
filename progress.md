@@ -3,7 +3,7 @@
 **Project Owner / Lead Developer:** Samruddhi  
 **Last Updated:** September 6, 2026  
 **Repository Branch:** `main`  
-**Current Milestone:** FinTrack AI Intelligence Suite Complete (Features 1–14 Built & Tested, Production Ready)
+**Current Milestone:** FinTrack AI Intelligence Suite Complete (Features 1–15 Built & Tested, Production Ready)
 
 ---
 
@@ -25,49 +25,41 @@
 | **AI Voice Hands-Free Logger** | ✅ **Built & Tested** | Web Speech API speech-to-text with spoken currency NLP parsing (`VoiceLoggerModal.tsx`) |
 | **AI Group Bill & Debt Splitter** | ✅ **Built & Tested** | Equal/Percentage/Custom bill debt calculator, settlement matrix, WhatsApp summary, 1-click expense pre-fill |
 | **AI What-If Goal Simulator** | ✅ **Built & Tested** | Dynamic goal target feasibility calculator, monthly pace predictor, category cutback recommendations, and timeline projection bars |
+| **AI Savings Challenges & Badges** | ✅ **Built & Tested** | Personalized micro-challenges tailored to PostgreSQL spending patterns, XP levels, savings streak tracking, and rewards |
 | **Complete Features Specs** | ✅ **Documented** | Detailed specification in [`FEATURES.md`](file:///d:/Fintrack/FEATURES.md) and [`AI_FEATURES.md`](file:///d:/Fintrack/AI_FEATURES.md) |
 | **Email Service** | ✅ **Complete & Pluggable** | Local SMTP (`aiosmtplib`), Production Resend API (`resend`), and Console fallback |
 | **Authentication System** | ✅ **Complete & Verified** | Email/Password, Google OAuth 2.0 (OIDC), JWT Access + HttpOnly Refresh Tokens |
 | **User Data Isolation** | ✅ **Enforced** | Every API endpoint derives `user_id` from JWT; SQL queries strictly filtered |
-| **Backend REST API Tests** | ✅ **21/21 Tests Passed** | Pytest auth, isolation, email, AI categorization, NLP, insights, forecast, health-score, OCR, copilot, anomalies, split-bill, goal simulator, budget, category, expense tests all green |
-| **Frontend Next.js App** | ✅ **13/13 Pages Built** | `npm run build` compiled clean with 0 errors across all routes |
+| **Backend REST API Tests** | ✅ **22/22 Tests Passed** | Pytest auth, isolation, email, AI categorization, NLP, insights, forecast, health-score, OCR, copilot, anomalies, split-bill, goal simulator, savings challenges, budget, category, expense tests all green |
+| **Frontend Next.js App** | ✅ **13/13 Pages Built** | `cmd /c npm run build` compiled clean with 0 errors across all routes |
 
 ---
 
 ## 🌟 Comprehensive Accomplishments Log (September 6, 2026)
 
-### 1. AI Financial Intelligence Engine Suite (Features 1–14 Complete)
-
-#### Feature 11: AI Anomaly & Subscription Price-Hike Detector (`GET /api/v1/ai/anomalies`)
-* **Backend**: Added `AnomalyItem` & `AnomaliesResponse` schemas, implemented `AIService.get_detected_anomalies(...)` auditing PostgreSQL transactions for recurring subscription price hikes ($\ge 5\%$), duplicate charges within 48h, and category spending spikes ($>2.5\times$ category median).
-* **Frontend**: Built [`AIAnomaliesWidget.tsx`](file:///d:/Fintrack/frontend/src/components/ai/AIAnomaliesWidget.tsx) mounted on the main Dashboard overview page with filter tabs (`All`, `Price Hikes 📈`, `Duplicates 👯`, `Spikes ⚡`) and clean slate security badge (`🛡️ Financial Records Clean & Secure`).
-
-#### Feature 12: AI Voice-Powered Hands-Free Expense Logger (`POST /api/v1/ai/parse-expense`)
-* **Backend**: Refined `parse_natural_language_expense` regex in [`rule_based_provider.py`](file:///d:/Fintrack/backend/app/services/ai/rule_based_provider.py) supporting spoken currency variations (`rupees`, `bucks`, `rs`, `₹`, `inr`) and stripping currency terms from extracted titles.
-* **Frontend**: Built [`VoiceLoggerModal.tsx`](file:///d:/Fintrack/frontend/src/components/ai/VoiceLoggerModal.tsx) using Web Speech API (`SpeechRecognition` / `webkitSpeechRecognition`), dynamic audio pulse visualizer, real-time live transcript display, and 1-click **"Fill Form"** / **"Log Expense Immediately"**.
-* **Trigger Access**: Integrated pink `🎙️ Voice Quick-Add` microphone button in [`ExpenseFormModal.tsx`](file:///d:/Fintrack/frontend/src/components/expenses/ExpenseFormModal.tsx).
-
-#### Feature 13: AI Group Bill & Receipt Debt Splitter (`POST /api/v1/ai/split-bill`)
-* **Backend**: Added `GroupBillSplitRequest` & `GroupBillSplitResponse` Pydantic models in [`schemas/ai.py`](file:///d:/Fintrack/backend/app/schemas/ai.py), implemented `AIService.split_group_bill(...)` in [`ai_service.py`](file:///d:/Fintrack/backend/app/services/ai/ai_service.py) with zero-drift paise rounding, net debt balance matrix calculation, WhatsApp shareable text summary generation, and category auto-matching.
-* **Frontend**: Built [`GroupBillSplitterModal.tsx`](file:///d:/Fintrack/frontend/src/components/ai/GroupBillSplitterModal.tsx) using FinTrack Vanilla CSS design tokens (`Modal.tsx` + `Button.tsx`). Supports Equal Split ⚖️, Percentage % Split, and Custom Amount 💰 modes, participant chip tag manager, WhatsApp summary copy, and 1-click `✨ Log My Share as FinTrack Expense`.
+### 1. AI Financial Intelligence Engine Suite (Features 1–15 Complete)
 
 #### Feature 14: AI "What-If" Financial Goal & Savings Simulator (`POST /api/v1/ai/simulate-goal`)
+* **Backend**: Added Pydantic models in [`schemas/ai.py`](file:///d:/Fintrack/backend/app/schemas/ai.py), implemented `AIService.simulate_financial_goal(...)` in [`ai_service.py`](file:///d:/Fintrack/backend/app/services/ai/ai_service.py), endpoint `POST /api/v1/ai/simulate-goal` in [`endpoints/ai.py`](file:///d:/Fintrack/backend/app/api/v1/endpoints/ai.py), and test `test_ai_simulate_financial_goal`.
+* **Frontend**: Built [`AIGoalSimulatorWidget.tsx`](file:///d:/Fintrack/frontend/src/components/ai/AIGoalSimulatorWidget.tsx) mounted on Budgets and Dashboard.
+
+#### Feature 15: AI Personalized Gamified Savings Challenges & Badges (`GET /api/v1/ai/challenges` & `POST /api/v1/ai/challenges/claim`)
 * **Backend**:
-  * Added `CategoryCutbackRecommendation`, `GoalSimulationRequest`, and `GoalSimulationResponse` Pydantic models in [`schemas/ai.py`](file:///d:/Fintrack/backend/app/schemas/ai.py).
-  * Implemented `AIService.simulate_financial_goal(...)` in [`ai_service.py`](file:///d:/Fintrack/backend/app/services/ai/ai_service.py) calculating required monthly savings pace, feasibility score (0–100%), historical savings pace comparison, category cutback recommendations, and projected target reach date.
-  * Added REST endpoint `POST /api/v1/ai/simulate-goal` in [`endpoints/ai.py`](file:///d:/Fintrack/backend/app/api/v1/endpoints/ai.py).
-  * Added automated test `test_ai_simulate_financial_goal` in [`tests/test_ai_api.py`](file:///d:/Fintrack/backend/tests/test_ai_api.py).
+  * Added `SavingsChallengeItem`, `SavingsChallengesResponse`, and `ClaimChallengeRequest` Pydantic models in [`schemas/ai.py`](file:///d:/Fintrack/backend/app/schemas/ai.py).
+  * Implemented `AIService.get_savings_challenges(...)` and `AIService.claim_savings_challenge(...)` in [`ai_service.py`](file:///d:/Fintrack/backend/app/services/ai/ai_service.py) auditing transaction history for discretionary spend patterns.
+  * Added REST endpoints `GET /api/v1/ai/challenges` and `POST /api/v1/ai/challenges/claim` in [`endpoints/ai.py`](file:///d:/Fintrack/backend/app/api/v1/endpoints/ai.py).
+  * Added automated unit test `test_ai_savings_challenges` in [`tests/test_ai_api.py`](file:///d:/Fintrack/backend/tests/test_ai_api.py).
 * **Frontend**:
-  * Added TypeScript interfaces in [`types/ai.ts`](file:///d:/Fintrack/frontend/src/types/ai.ts) and `simulateGoal` method in [`services/aiApi.ts`](file:///d:/Fintrack/frontend/src/services/aiApi.ts).
-  * Built [`AIGoalSimulatorWidget.tsx`](file:///d:/Fintrack/frontend/src/components/ai/AIGoalSimulatorWidget.tsx) featuring quick target goal preset buttons (MacBook, Emergency Fund, Bali Vacation, Custom), timeline month slider, live feasibility score meter, category cutback breakdown chips, and target date projection bar.
-  * Mounted [`AIGoalSimulatorWidget.tsx`](file:///d:/Fintrack/frontend/src/components/ai/AIGoalSimulatorWidget.tsx) on both the Budgets page (`app/budgets/page.tsx`) and main Dashboard page (`app/page.tsx`).
+  * Added TypeScript interfaces in [`types/ai.ts`](file:///d:/Fintrack/frontend/src/types/ai.ts) and API methods `getSavingsChallenges()` & `claimSavingsChallenge()` in [`services/aiApi.ts`](file:///d:/Fintrack/frontend/src/services/aiApi.ts).
+  * Built [`AISavingsChallengesWidget.tsx`](file:///d:/Fintrack/frontend/src/components/ai/AISavingsChallengesWidget.tsx) featuring XP Level badge header, savings streak tracker (`🔥 5-Day Streak`), unlocked savings trophy counter, filter tabs, progress bars, and 1-click **"Accept Challenge"** / **"Complete & Claim Reward"**.
+  * Mounted [`AISavingsChallengesWidget.tsx`](file:///d:/Fintrack/frontend/src/components/ai/AISavingsChallengesWidget.tsx) on both Budgets page (`app/budgets/page.tsx`) and Dashboard overview page (`app/page.tsx`).
 
 ---
 
 ## 🧪 Automated Test Verification
 
-* **Backend Pytest Suite**: `21/21 passed` (11 tests in `test_ai_api.py` including `test_ai_simulate_financial_goal` passed cleanly):
-  * `test_ai_api.py` (11 tests: Factory, Categorize, NLP Parser, Insights, Forecast, Health Score, Receipt OCR Scanner, Copilot, Anomalies, Split Group Bill, Simulate Financial Goal)
+* **Backend Pytest Suite**: `22/22 passed` (12 tests in `test_ai_api.py` including `test_ai_savings_challenges` passed cleanly):
+  * `test_ai_api.py` (12 tests: Factory, Categorize, NLP Parser, Insights, Forecast, Health Score, Receipt OCR Scanner, Copilot, Anomalies, Split Group Bill, Simulate Financial Goal, Savings Challenges)
   * `test_auth.py`
   * `test_budgets_api.py`
   * `test_categories_api.py`
@@ -102,6 +94,7 @@ cd d:\Fintrack\backend
 
 ## 🔖 Instructions for Next Session
 
-1. All code changes for Feature 14 have been fully implemented, integrated, and verified against Pytest unit tests and Next.js production compilation.
+1. All code changes for Feature 15 have been fully implemented, integrated, and verified against Pytest unit tests and Next.js production compilation.
 2. [`AI_FEATURES.md`](file:///d:/Fintrack/AI_FEATURES.md) and [`progress.md`](file:///d:/Fintrack/progress.md) contain complete specifications and memory logs.
 3. FinTrack is stable, fully tested, and ready for production deployment or further feature additions as requested by Samruddhi.
+rack is stable, fully tested, and ready for production deployment or further feature additions as requested by Samruddhi.

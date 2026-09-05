@@ -234,6 +234,35 @@ export interface GoalSimulationResponse {
   summary_narrative: string;
 }
 
+export interface SavingsChallengeItem {
+  id: string;
+  title: string;
+  description: string;
+  category_name: string;
+  target_savings: number;
+  duration_days: number;
+  difficulty: 'Easy 🌱' | 'Medium ⚡' | 'Hard 🏆' | string;
+  reward_points: number;
+  badge_icon: string;
+  status: 'available' | 'active' | 'completed' | string;
+  progress_percentage: number;
+  current_spent: number;
+  allowed_max_spend: number;
+}
+
+export interface SavingsChallengesResponse {
+  provider: string;
+  total_points: number;
+  current_streak_days: number;
+  level_title: string;
+  level_badge: string;
+  total_savings_unlocked: number;
+  active_challenges_count: number;
+  challenges: SavingsChallengeItem[];
+  summary_headline: string;
+}
+
+
 
 
 

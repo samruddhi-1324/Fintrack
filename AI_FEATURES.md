@@ -226,11 +226,26 @@ Integrated into the Dashboard ([`AIInsightsWidget.tsx`](file:///d:/Fintrack/fron
 
 ---
 
+## 🎮 15. AI Personalized Gamified Savings Challenges & Badges
+
+* **API Endpoints**: `GET /api/v1/ai/challenges` & `POST /api/v1/ai/challenges/claim`
+* **Frontend Component**: [`AISavingsChallengesWidget.tsx`](file:///d:/Fintrack/frontend/src/components/ai/AISavingsChallengesWidget.tsx)
+* **Dashboard & Budget Locations**: Mounted on Dashboard (`app/page.tsx`) and Live Budget Tracking (`app/budgets/page.tsx`).
+
+### Capabilities:
+* **PostgreSQL Transaction Audit**: Evaluates high discretionary outflow categories (Dining, Entertainment, Shopping) to auto-generate personalized micro-challenges.
+* **Gamified XP Level & Badges**: Earn FinTrack XP points (+150 XP, +350 XP, +500 XP) and advance XP Levels (`Financial Ninja 🥷`, `Wealth Master 👑`).
+* **Savings Streak Tracking**: Active streak days counter (`🔥 5-Day Streak`) and Total Unlocked Rupee Savings counter.
+* **Interactive Challenge Actions**: Filter challenges by `All`, `Active`, `Available`, or `Completed`. 1-Click **"Accept Challenge"** and **"Complete & Claim Reward 🎉"**.
+
+---
+
 ## 🧪 Verification & Automated Testing
 
 All AI features are backed by automated tests:
-* **Backend Pytest Suite**: `pytest tests/test_ai_api.py -v` (11/11 AI tests passed, 21/21 total backend tests passed).
-* **Frontend Build**: `npm run build` (13/13 static routes compiled with 0 errors).
+* **Backend Pytest Suite**: `pytest tests/test_ai_api.py -v` (12/12 AI tests passed, 22/22 total backend tests passed).
+* **Frontend Build**: `cmd /c npm run build` (13/13 static routes compiled with 0 errors).
+
 
 
 

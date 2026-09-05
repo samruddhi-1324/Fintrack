@@ -12,10 +12,22 @@ import {
   GroupBillSplitRequest,
   GroupBillSplitResponse,
   GoalSimulationRequest,
-  GoalSimulationResponse
+  GoalSimulationResponse,
+  SavingsChallengesResponse
 } from '../types/ai';
 
 export const aiApi = {
+  getSavingsChallenges: () =>
+    fetchApi<SavingsChallengesResponse>('/ai/challenges', {
+      method: 'GET'
+    }),
+
+  claimSavingsChallenge: (challengeId: string) =>
+    fetchApi<{ status: string; points_awarded: number; message: string }>('/ai/challenges/claim', {
+      method: 'POST',
+      body: JSON.stringify({ challenge_id: challengeId })
+    }),
+
   simulateGoal: (data: GoalSimulationRequest) =>
     fetchApi<GoalSimulationResponse>('/ai/simulate-goal', {
       method: 'POST',

@@ -15,6 +15,7 @@ import { aiApi } from '../../services/aiApi';
 import { formatCurrency } from '../../lib/formatters';
 import { Sparkles, Zap, ArrowRight } from 'lucide-react';
 import { AIGoalSimulatorWidget } from '../../components/ai/AIGoalSimulatorWidget';
+import { AISavingsChallengesWidget } from '../../components/ai/AISavingsChallengesWidget';
 
 
 export default function BudgetsPage() {
@@ -71,6 +72,9 @@ export default function BudgetsPage() {
             + Set Budget Goal
           </Button>
         </div>
+
+        {/* AI Personalized Gamified Savings Challenges Widget */}
+        <AISavingsChallengesWidget />
 
         {/* AI What-If Goal & Savings Simulator Widget */}
         <AIGoalSimulatorWidget onApplyBudgets={() => setIsModalOpen(true)} />
