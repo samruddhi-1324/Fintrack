@@ -96,6 +96,7 @@ fun FinTrackNavGraph(navController: NavHostController) {
                     onNavigateToCopilot = { navController.navigate(Screen.CopilotChat.route) },
                     onNavigateToReceiptScanner = { navController.navigate(Screen.ReceiptScanner.route) },
                     onNavigateToSplitBill = { navController.navigate(Screen.SplitBill.route) },
+                    onNavigateToVoiceLogger = { navController.navigate(Screen.VoiceLogger.route) },
                     onNavigateToProfile = { navController.navigate(Screen.Settings.route) }
                 )
             }
@@ -104,6 +105,7 @@ fun FinTrackNavGraph(navController: NavHostController) {
                 ExpensesScreen(
                     viewModel = expensesViewModel,
                     onNavigateToReceiptScanner = { navController.navigate(Screen.ReceiptScanner.route) },
+                    onNavigateToVoiceLogger = { navController.navigate(Screen.VoiceLogger.route) },
                     onNavigateToProfile = { navController.navigate(Screen.Settings.route) }
                 )
             }
@@ -122,6 +124,7 @@ fun FinTrackNavGraph(navController: NavHostController) {
                     onNavigateToCopilot = { navController.navigate(Screen.CopilotChat.route) },
                     onNavigateToSplitBill = { navController.navigate(Screen.SplitBill.route) },
                     onNavigateToTaxAssistant = { navController.navigate(Screen.TaxAssistant.route) },
+                    onNavigateToVoiceLogger = { navController.navigate(Screen.VoiceLogger.route) },
                     onNavigateToProfile = { navController.navigate(Screen.Settings.route) }
                 )
             }
@@ -140,6 +143,17 @@ fun FinTrackNavGraph(navController: NavHostController) {
             // AI Sub-screens
             composable(Screen.ReceiptScanner.route) {
                 ReceiptScannerScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onExpenseLogged = {
+                        expensesViewModel.loadData()
+                        dashboardViewModel.loadDashboardData()
+                        navController.popBackStack()
+                    }
+                )
+            }
+
+            composable(Screen.VoiceLogger.route) {
+                VoiceLoggerScreen(
                     onNavigateBack = { navController.popBackStack() },
                     onExpenseLogged = {
                         expensesViewModel.loadData()

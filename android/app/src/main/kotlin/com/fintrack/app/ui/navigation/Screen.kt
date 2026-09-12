@@ -23,6 +23,7 @@ sealed class Screen(val route: String, val title: String = "") {
     object CopilotChat : Screen("copilot_chat", "AI Copilot")
     object SplitBill : Screen("split_bill", "Split Bill")
     object TaxAssistant : Screen("tax_assistant", "Tax & GST")
+    object VoiceLogger : Screen("voice_logger", "Voice Logger")
 }
 
 data class BottomNavItem(

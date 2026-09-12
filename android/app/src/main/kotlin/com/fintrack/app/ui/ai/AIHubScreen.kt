@@ -39,6 +39,7 @@ fun AIHubScreen(
     onNavigateToCopilot: () -> Unit,
     onNavigateToSplitBill: () -> Unit,
     onNavigateToTaxAssistant: () -> Unit,
+    onNavigateToVoiceLogger: () -> Unit = {},
     onNavigateToProfile: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -625,6 +626,72 @@ fun AIHubScreen(
                                 style = Typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontSize = 11.sp
+                            )
+                        }
+                    }
+                }
+
+                // Voice Logger Dedicated Card
+                GlassmorphicCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onNavigateToVoiceLogger() },
+                    backgroundColor = MaterialTheme.colorScheme.surface,
+                    borderColor = EmeraldSecondary.copy(alpha = 0.4f),
+                    cornerRadius = 16.dp,
+                    contentPadding = 14.dp
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(42.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(EmeraldSecondary.copy(alpha = 0.15f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Mic,
+                                    contentDescription = null,
+                                    tint = EmeraldSecondary,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                            Column {
+                                Text(
+                                    text = "Voice Expense Logger",
+                                    style = Typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "Hands-free speech to PostgreSQL ledger",
+                                    style = Typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontSize = 11.sp
+                                )
+                            }
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(EmeraldSecondary.copy(alpha = 0.15f))
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = "TAP TO SPEAK →",
+                                style = Typography.labelSmall,
+                                color = EmeraldSecondary,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 10.sp
                             )
                         }
                     }

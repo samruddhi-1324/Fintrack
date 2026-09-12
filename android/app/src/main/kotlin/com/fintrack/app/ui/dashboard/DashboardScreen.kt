@@ -44,6 +44,7 @@ fun DashboardScreen(
     onNavigateToCopilot: () -> Unit,
     onNavigateToReceiptScanner: () -> Unit,
     onNavigateToSplitBill: () -> Unit = {},
+    onNavigateToVoiceLogger: () -> Unit = {},
     onNavigateToProfile: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -337,7 +338,7 @@ fun DashboardScreen(
                         badge = "NLP Parse",
                         icon = Icons.Filled.Mic,
                         iconTint = MaterialTheme.colorScheme.primary,
-                        onClick = { showVoiceLogger = true }
+                        onClick = onNavigateToVoiceLogger
                     )
 
                     RapidActionCard(

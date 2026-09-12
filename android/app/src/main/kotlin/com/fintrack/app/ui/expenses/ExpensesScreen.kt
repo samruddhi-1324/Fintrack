@@ -35,6 +35,7 @@ import java.util.Locale
 fun ExpensesScreen(
     viewModel: ExpensesViewModel,
     onNavigateToReceiptScanner: () -> Unit = {},
+    onNavigateToVoiceLogger: () -> Unit = {},
     onNavigateToProfile: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -250,7 +251,7 @@ fun ExpensesScreen(
                             .clip(RoundedCornerShape(8.dp))
                             .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f))
                             .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
-                            .clickable { showVoiceLogger = true }
+                            .clickable { onNavigateToVoiceLogger() }
                             .padding(horizontal = 10.dp, vertical = 8.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
