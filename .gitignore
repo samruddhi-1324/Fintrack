@@ -39,3 +39,16 @@ Thumbs.db
 *.log
 *.sqlite
 *.db
+
+# Android
+.gradle/
+android/.gradle/
+android/build/
+android/app/build/
+android/sdk/
+android/jdk*/
+jdk*/
+android/local.properties
+*.apk
+*.aar
+*.zip

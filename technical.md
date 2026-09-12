@@ -9,8 +9,11 @@ This document outlines the technical architecture, design decisions, data contra
 ## 🏗️ 1. High-Level Architecture
 
 ```
-[ Next.js 14 App Router ] <---> [ Axios / Fetch API ] <---> [ FastAPI v1 REST API ] <---> [ SQLAlchemy 2.0 Async ] <---> [ PostgreSQL ]
-  (Port 3000)                                                    (Port 8000)                    (asyncpg)               (fintrack_db)
+[ Next.js 14 App Router ] <----\
+  (Web - Port 3000)              \
+                                  +---> [ FastAPI v1 REST API ] <---> [ SQLAlchemy 2.0 Async ] <---> [ PostgreSQL ]
+[ Android Native (Compose) ] <---/             (Port 8000)                    (asyncpg)               (fintrack_db)
+  (Kotlin - Mobile App)
 ```
 
 ---
@@ -78,43 +81,65 @@ This document outlines the technical architecture, design decisions, data contra
 
 1. **JWT Session Model**:
    - **Access Token**: Short-lived (15 minutes), signed with `HS256`, transmitted in `Authorization: Bearer <token>` header.
-   - **Refresh Token**: Long-lived (7 days), stored in `HttpOnly`, `SameSite=Lax`, `Secure` cookie (`fintrack_refresh_token`).
-   - **Token Rotation**: Every call to `/api/v1/auth/refresh` revokes the previous token hash and issues a new refresh token and cookie.
+   - **Refresh Token**: Long-lived (7 days), stored in `HttpOnly`, `SameSite=Lax`, `Secure` cookie on Web and Jetpack DataStore / `TokenManager` on Android Native.
+   - **Token Rotation**: Every call to `/api/v1/auth/refresh` revokes the previous token hash and issues a new refresh token.
    - **Revocation Table**: Database stores SHA-256 token hashes. Reusing a revoked token triggers instant global session invalidation (`logout-all`).
 
 2. **Google OAuth 2.0 / OpenID Connect**:
    - Google ID Tokens verified via `google.oauth2.id_token.verify_oauth2_token`.
-   - Includes `clock_skew_in_seconds=600` (10-minute tolerance) and fallback to Google REST API `https://oauth2.googleapis.com/tokeninfo?id_token=...` to ensure system clock drift never breaks authentication.
+   - Includes `clock_skew_in_seconds=600` (10-minute tolerance) and fallback to Google REST API `https://oauth2.googleapis.com/tokeninfo?id_token=...`.
 
 3. **Strict User Data Isolation**:
-   - Injected `get_current_user` FastAPI dependency across all endpoints (`expenses`, `categories`, `budgets`, `dashboard`, `reports`, `export`).
+   - Injected `get_current_user` FastAPI dependency across all endpoints.
    - Every database query strictly filters by `Model.user_id == current_user.id`.
 
 ---
 
-## 🛠️ 4. Critical Technical Fixes & Patterns
+## 📱 4. Android Native Architecture (`android/`)
 
-### A. React Hook Form Component Binding (`frontend/src/components/ui/Input.tsx`)
-- **Fix**: Wrapped `Input` with `React.forwardRef<HTMLInputElement, InputProps>`, allowing input value registration and error focus.
+1. **Tech Stack & Libraries**:
+   - **Language**: Kotlin 1.9.22 + JDK 17 LTS (Eclipse Adoptium).
+   - **UI Toolkit**: Jetpack Compose + Material 3.
+   - **Navigation**: Jetpack Navigation Compose (Single Activity `MainActivity.kt`).
+   - **Networking**: Retrofit 2 + OkHttp 3 with `AuthInterceptor` for automatic JWT Bearer injection and background 401 token refresh.
+   - **State & Storage**: Kotlin Coroutines + `StateFlow` + Jetpack DataStore `TokenManager`.
+   - **Hardware Integrations**: CameraX & Gallery picker for Receipt Vision OCR, Web/Android Speech recognizer for Voice Logging.
 
-### B. Timezone Date Validation (`frontend/src/lib/formatters.ts`)
-- **Fix**: Implemented `getTodayLocalDateString()` using `d.getFullYear()`, `d.getMonth()`, `d.getDate()` to generate ISO dates in the user's local timezone.
+2. **Network Resilience & Connection**:
+   - Supports Android Emulator (`http://10.0.2.2:8000/api/v1/`), USB reverse port forwarding (`http://localhost:8000/api/v1/`), and Wi-Fi LAN IP (`http://10.88.244.110:8000/api/v1/`).
+   - Dynamic Server Configuration modal accessible directly from Login Screen and Settings.
+   - `network_security_config.xml` enables cleartext HTTP traffic for development IPs.
 
-### C. CORS Middleware (`backend/app/main.py`)
-- **Fix**: Configured explicit origin array (`http://localhost:3000`, `http://127.0.0.1:3000`, etc.) with `settings.CORS_ORIGINS`.
-
-### D. Next.js Suspense Boundary for Search Params (`frontend/src/app/reset-password/page.tsx`)
-- **Fix**: Wrapped component reading `useSearchParams()` inside `<Suspense>` to comply with Next.js App Router static prerendering requirements.
+3. **Build & Toolchain**:
+   - Fully standalone Android SDK 34 (`platforms;android-34`, `build-tools;34.0.0`) in `android/sdk/` without requiring Android Studio.
+   - Command-line Gradle builds: `.\gradlew.bat assembleDebug` produces `app-debug.apk` in ~7 seconds.
 
 ---
 
-## 🚀 5. Deployment Readiness Checklist
+## 🛠️ 5. Critical Technical Fixes & Patterns
+
+### A. Android Network Connection on Physical Device
+- **Fix**: Configured `DEFAULT_BASE_URL` with Wi-Fi IPv4 (`http://10.88.244.110:8000/api/v1/`) and added `adb reverse tcp:8000 tcp:8000` to prevent 30,000ms connection timeouts on physical phones.
+
+### B. React Hook Form Component Binding (`frontend/src/components/ui/Input.tsx`)
+- **Fix**: Wrapped `Input` with `React.forwardRef<HTMLInputElement, InputProps>`, allowing input value registration and error focus.
+
+### C. Timezone Date Validation (`frontend/src/lib/formatters.ts`)
+- **Fix**: Implemented `getTodayLocalDateString()` using `d.getFullYear()`, `d.getMonth()`, `d.getDate()` to generate ISO dates in the user's local timezone.
+
+### D. CORS Middleware (`backend/app/main.py`)
+- **Fix**: Configured explicit origin array (`http://localhost:3000`, `http://127.0.0.1:3000`, etc.) with `settings.CORS_ORIGINS`.
+
+---
+
+## 🚀 6. Deployment & Build Commands
 
 1. **Backend**:
-   - Docker build: `docker build -t fintrack-backend ./backend`
-   - Run command: `alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-   - Managed DB: Set `DATABASE_URL` and `ASYNC_DATABASE_URL` (SSL required).
+   - Run command: `.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8000`
 
-2. **Frontend**:
-   - Build command: `npm run build`
-   - Environment variables: `NEXT_PUBLIC_API_BASE_URL` and `NEXT_PUBLIC_GOOGLE_CLIENT_ID`.
+2. **Android Native**:
+   - Build APK: `cd D:\Fintrack\android && .\gradlew.bat assembleDebug`
+   - USB Install: `& 'D:\Fintrack\android\sdk\platform-tools\adb.exe' install -r 'D:\Fintrack\android\app\build\outputs\apk\debug\app-debug.apk'`
+
+3. **Web Frontend**:
+   - Dev server: `cd D:\Fintrack\frontend && npm run dev`

@@ -63,6 +63,30 @@ class Settings(BaseSettings):
     
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
+    from pydantic import model_validator
+    @model_validator(mode="after")
+    def assemble_db_and_cors(self) -> "Settings":
+        # Handle CORS string from env if passed as comma-separated string
+        if isinstance(self.CORS_ORIGINS, str):
+            self.CORS_ORIGINS = [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
+            
+        # Standardize DATABASE_URL for Postgres/Supabase
+        if self.DATABASE_URL and self.DATABASE_URL.startswith("postgres://"):
+            self.DATABASE_URL = self.DATABASE_URL.replace("postgres://", "postgresql://", 1)
+        
+        # Standardize ASYNC_DATABASE_URL for asyncpg
+        if self.DATABASE_URL and "localhost:5432/fintrack_db" not in self.DATABASE_URL:
+            if not self.ASYNC_DATABASE_URL or "localhost:5432/fintrack_db" in self.ASYNC_DATABASE_URL:
+                self.ASYNC_DATABASE_URL = self.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+        
+        if self.ASYNC_DATABASE_URL:
+            if self.ASYNC_DATABASE_URL.startswith("postgres://"):
+                self.ASYNC_DATABASE_URL = self.ASYNC_DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1)
+            elif self.ASYNC_DATABASE_URL.startswith("postgresql://"):
+                self.ASYNC_DATABASE_URL = self.ASYNC_DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+            
+        return self
+
 settings = Settings()
 
 

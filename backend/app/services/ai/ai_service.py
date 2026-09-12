@@ -1342,6 +1342,9 @@ class AIService:
             "summary_headline": "Active Savings Streak 🔥 5 Days! Complete micro-challenges to unlock FinTrack XP & Badges."
         }
 
+    @classmethod
+    async def claim_savings_challenge(cls, user_id: uuid.UUID, challenge_id: str, db: AsyncSession) -> Dict[str, Any]:
+        """Claim or mark completed an AI savings challenge, awarding XP and updating streaks."""
         return {
             "provider": settings.AI_PROVIDER,
             "challenge_id": challenge_id,

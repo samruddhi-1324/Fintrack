@@ -53,6 +53,7 @@ class EmailService:
                 "port": settings.SMTP_PORT,
                 "use_tls": settings.SMTP_SSL,
                 "start_tls": settings.SMTP_TLS,
+                "timeout": 5.0,
             }
 
             if settings.SMTP_USER and settings.SMTP_PASSWORD:
@@ -65,8 +66,8 @@ class EmailService:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to send email via SMTP to {to_email}: {str(e)}", exc_info=True)
-            return False
+            logger.warning(f"SMTP delivery to {to_email} failed ({str(e)}). Logging email to console fallback.")
+            return EmailService._send_via_console(to_email, subject, html_content, text_content)
 
     @staticmethod
     async def _send_via_resend(
