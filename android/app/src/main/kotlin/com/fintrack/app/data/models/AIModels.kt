@@ -62,7 +62,8 @@ data class NLPParseResponse(
     @SerializedName("title") val title: String,
     @SerializedName("amount") val amount: Double,
     @SerializedName("category") val category: String? = null,
-    @SerializedName("payment_mode") val paymentMode: String = "cash",
+    @SerializedName("category_id") val categoryId: String? = null,
+    @SerializedName("payment_mode") val paymentMode: String = "upi",
     @SerializedName("date") val date: String? = null,
     @SerializedName("confidence") val confidence: Double = 1.0
 )

@@ -18,6 +18,7 @@ data class DashboardUiState(
     val healthScore: HealthScoreResponse? = null,
     val forecast: ForecastResponse? = null,
     val anomalies: AnomalyDetectionResponse? = null,
+    val categories: List<CategoryResponse> = emptyList(),
     val error: String? = null
 )
 
@@ -39,6 +40,7 @@ class DashboardViewModel : ViewModel() {
                 val healthRes = aiRepository.getHealthScore()
                 val forecastRes = aiRepository.getForecast()
                 val anomalyRes = aiRepository.getAnomalies()
+                val categoriesRes = expenseRepository.getCategories()
 
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
@@ -46,7 +48,8 @@ class DashboardViewModel : ViewModel() {
                     budgetSummary = budgetRes.getOrNull(),
                     healthScore = healthRes.getOrNull(),
                     forecast = forecastRes.getOrNull(),
-                    anomalies = anomalyRes.getOrNull()
+                    anomalies = anomalyRes.getOrNull(),
+                    categories = categoriesRes.getOrNull() ?: emptyList()
                 )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(

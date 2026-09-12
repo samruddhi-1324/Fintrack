@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fintrack.app.data.models.ExpenseResponse
+import com.fintrack.app.ui.ai.VoiceExpenseLoggerBottomSheet
 import com.fintrack.app.ui.components.FinTrackTopBar
 import com.fintrack.app.ui.components.GlassmorphicCard
 import com.fintrack.app.ui.theme.*
@@ -40,6 +41,7 @@ fun ExpensesScreen(
     val indianCurrency = remember { NumberFormat.getCurrencyInstance(Locale("en", "IN")) }
     var selectedPaymentMode by remember { mutableStateOf("ALL") }
     var showAddSheet by remember { mutableStateOf(false) }
+    var showVoiceLogger by remember { mutableStateOf(false) }
     var selectedExpenseForEdit by remember { mutableStateOf<ExpenseResponse?>(null) }
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -242,6 +244,32 @@ fun ExpensesScreen(
                         }
                     }
 
+                    // Voice Log Button
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f))
+                            .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+                            .clickable { showVoiceLogger = true }
+                            .padding(horizontal = 10.dp, vertical = 8.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Filled.Mic,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "Voice Log",
+                                style = Typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
                     // Export CSV Button
                     Box(
                         modifier = Modifier
@@ -334,6 +362,17 @@ fun ExpensesScreen(
             onSaveSuccess = {
                 viewModel.loadData()
                 showAddSheet = false
+            }
+        )
+    }
+
+    if (showVoiceLogger) {
+        VoiceExpenseLoggerBottomSheet(
+            categories = uiState.categories,
+            onDismiss = { showVoiceLogger = false },
+            onExpenseLoggedSuccess = {
+                viewModel.loadData()
+                showVoiceLogger = false
             }
         )
     }

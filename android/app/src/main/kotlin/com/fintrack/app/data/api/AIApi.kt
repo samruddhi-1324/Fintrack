@@ -13,7 +13,7 @@ interface AIApi {
     @GET("ai/forecast")
     suspend fun getForecast(): Response<ForecastResponse>
 
-    @POST("ai/parse-nlp")
+    @POST("ai/parse-expense")
     suspend fun parseNLP(@Body request: NLPParseRequest): Response<NLPParseResponse>
 
     @Multipart

@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fintrack.app.FinTrackApp
+import com.fintrack.app.ui.ai.VoiceExpenseLoggerBottomSheet
 import com.fintrack.app.ui.components.FinTrackTopBar
 import com.fintrack.app.ui.components.GlassmorphicCard
 import com.fintrack.app.ui.theme.*
@@ -51,6 +52,7 @@ fun DashboardScreen(
     val currentMonthName = remember { SimpleDateFormat("MMMM", Locale.getDefault()).format(Date()) }
     val currentMonthYear = remember { SimpleDateFormat("MMM yyyy", Locale.getDefault()).format(Date()) }
     var isBalanceVisible by remember { mutableStateOf(true) }
+    var showVoiceLogger by remember { mutableStateOf(false) }
 
     val calendar = Calendar.getInstance()
     val currentDay = calendar.get(Calendar.DAY_OF_MONTH)
@@ -335,7 +337,7 @@ fun DashboardScreen(
                         badge = "NLP Parse",
                         icon = Icons.Filled.Mic,
                         iconTint = MaterialTheme.colorScheme.primary,
-                        onClick = onNavigateToExpenses
+                        onClick = { showVoiceLogger = true }
                     )
 
                     RapidActionCard(
@@ -585,6 +587,16 @@ fun DashboardScreen(
             }
 
             Spacer(modifier = Modifier.height(60.dp))
+        }
+
+        if (showVoiceLogger) {
+            VoiceExpenseLoggerBottomSheet(
+                categories = uiState.categories,
+                onDismiss = { showVoiceLogger = false },
+                onExpenseLoggedSuccess = {
+                    viewModel.loadDashboardData()
+                }
+            )
         }
     }
 }

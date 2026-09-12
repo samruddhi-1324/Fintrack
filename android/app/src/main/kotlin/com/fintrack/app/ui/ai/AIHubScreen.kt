@@ -1,5 +1,11 @@
 package com.fintrack.app.ui.ai
 
+import android.app.Activity
+import android.content.Intent
+import android.speech.RecognizerIntent
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,9 +23,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.fintrack.app.data.models.CategoryResponse
+import com.fintrack.app.data.repository.ExpenseRepository
 import com.fintrack.app.ui.components.FinTrackTopBar
 import com.fintrack.app.ui.components.GlassmorphicCard
 import com.fintrack.app.ui.theme.*
@@ -32,8 +41,42 @@ fun AIHubScreen(
     onNavigateToTaxAssistant: () -> Unit,
     onNavigateToProfile: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     var chatInput by remember { mutableStateOf("") }
     var claimedXp by remember { mutableStateOf(false) }
+    var showVoiceLogger by remember { mutableStateOf(false) }
+    var categories by remember { mutableStateOf<List<CategoryResponse>>(emptyList()) }
+    val expenseRepository = remember { ExpenseRepository() }
+
+    LaunchedEffect(Unit) {
+        val catRes = expenseRepository.getCategories()
+        categories = catRes.getOrNull() ?: emptyList()
+    }
+
+    val speechLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK && result.data != null) {
+            val spoken = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+            val text = spoken?.firstOrNull() ?: ""
+            if (text.isNotBlank()) {
+                chatInput = text
+            }
+        }
+    }
+
+    fun startVoiceInput() {
+        try {
+            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-IN")
+                putExtra(RecognizerIntent.EXTRA_PROMPT, "Ask Copilot your financial question...")
+            }
+            speechLauncher.launch(intent)
+        } catch (e: Exception) {
+            Toast.makeText(context, "Voice input unavailable: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -349,13 +392,13 @@ fun AIHubScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         IconButton(
-                            onClick = { /* Voice input */ },
+                            onClick = { startVoiceInput() },
                             modifier = Modifier.size(34.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.Mic,
-                                contentDescription = "Voice",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                contentDescription = "Voice Input",
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(18.dp)
                             )
                         }
@@ -743,6 +786,16 @@ fun AIHubScreen(
             }
 
             Spacer(modifier = Modifier.height(70.dp))
+        }
+
+        if (showVoiceLogger) {
+            VoiceExpenseLoggerBottomSheet(
+                categories = categories,
+                onDismiss = { showVoiceLogger = false },
+                onExpenseLoggedSuccess = {
+                    showVoiceLogger = false
+                }
+            )
         }
     }
 }
