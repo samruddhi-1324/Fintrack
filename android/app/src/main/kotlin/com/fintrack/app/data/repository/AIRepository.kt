@@ -65,13 +65,23 @@ class AIRepository {
         }
     }
 
-    suspend fun sendCopilotMessage(message: String): Result<AICopilotResponse> {
+    suspend fun sendCopilotMessage(
+        message: String,
+        chatHistory: List<AICopilotChatMessage> = emptyList()
+    ): Result<AICopilotResponse> {
         return try {
-            val response = aiApi.sendCopilotMessage(AICopilotRequest(message))
+            val response = aiApi.sendCopilotMessage(
+                AICopilotRequest(
+                    question = message,
+                    message = message,
+                    chatHistory = chatHistory
+                )
+            )
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!)
             } else {
-                Result.failure(Exception(response.errorBody()?.string() ?: "Copilot query failed"))
+                val errorMsg = response.errorBody()?.string() ?: "Copilot query failed (${response.code()})"
+                Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
             Result.failure(e)

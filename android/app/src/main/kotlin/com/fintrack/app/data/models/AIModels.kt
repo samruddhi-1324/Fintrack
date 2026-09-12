@@ -69,14 +69,30 @@ data class NLPParseResponse(
 )
 
 // 5. Copilot Chat
+data class AICopilotChatMessage(
+    @SerializedName("role") val role: String = "user",
+    @SerializedName("content") val content: String
+)
+
 data class AICopilotRequest(
-    @SerializedName("message") val message: String
+    @SerializedName("question") val question: String? = null,
+    @SerializedName("message") val message: String? = null,
+    @SerializedName("chat_history") val chatHistory: List<AICopilotChatMessage> = emptyList()
 )
 
 data class AICopilotResponse(
-    @SerializedName("reply") val reply: String,
+    @SerializedName("provider") val provider: String = "rule_based",
+    @SerializedName("answer") val answer: String? = null,
+    @SerializedName("reply") val reply: String? = null,
+    @SerializedName("suggested_followups") val suggestedFollowups: List<String> = emptyList(),
     @SerializedName("suggested_actions") val suggestedActions: List<String> = emptyList()
-)
+) {
+    val displayReply: String
+        get() = reply ?: answer ?: "Here is your financial update."
+
+    val displayActions: List<String>
+        get() = if (suggestedFollowups.isNotEmpty()) suggestedFollowups else suggestedActions
+}
 
 // 6. Anomalies
 data class AnomalyDetectionResponse(

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from typing import List, Optional, Dict, Any
 
 class CategorizeRequest(BaseModel):
@@ -116,17 +116,36 @@ class ReceiptScanResponse(BaseModel):
     raw_text: Optional[str] = None
 
 class ChatMessage(BaseModel):
-    role: str  # "user" | "assistant"
+    role: str = "user"  # "user" | "assistant"
     content: str
 
 class AICopilotRequest(BaseModel):
-    question: str = Field(..., min_length=1, max_length=500, description="User question or query for the AI Financial Copilot")
+    question: Optional[str] = Field(default=None, description="User question or query for the AI Financial Copilot")
+    message: Optional[str] = Field(default=None, description="Alternative field for user question")
     chat_history: List[ChatMessage] = Field(default=[], description="Previous conversation turn history")
 
+    @model_validator(mode="after")
+    def populate_question(self):
+        if not self.question and self.message:
+            self.question = self.message
+        if not self.question:
+            self.question = "Help me understand my financial overview"
+        return self
+
 class AICopilotResponse(BaseModel):
-    provider: str
+    provider: str = "rule_based"
     answer: str
+    reply: Optional[str] = None
     suggested_followups: List[str] = []
+    suggested_actions: List[str] = []
+
+    @model_validator(mode="after")
+    def sync_aliases(self):
+        if not self.reply:
+            self.reply = self.answer
+        if not self.suggested_actions and self.suggested_followups:
+            self.suggested_actions = self.suggested_followups
+        return self
 
 class AnomalyItem(BaseModel):
     id: str
